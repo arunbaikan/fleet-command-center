@@ -3,15 +3,17 @@ import { partnerProfile, mockLeads } from "@/lib/mockData";
 import StatusBadge from "@/components/fleet/StatusBadge";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Copy, Share2, Users, TrendingUp, ArrowRight } from "lucide-react";
+import { Copy, Share2, Users, TrendingUp, ArrowRight, Target, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 const Dashboard = () => {
-  const recentLeads = mockLeads.slice(0, 3);
+  const recentLeads = mockLeads.slice(0, 5);
 
   const stats = [
-    { label: "Total Leads", value: partnerProfile.totalLeads, icon: Users },
-    { label: "Conversion", value: `${partnerProfile.conversionRate}%`, icon: TrendingUp },
+    { label: "Total Leads", value: partnerProfile.totalLeads, icon: Users, color: "text-foreground" },
+    { label: "Conversion Rate", value: `${partnerProfile.conversionRate}%`, icon: TrendingUp, color: "text-accent" },
+    { label: "Active This Week", value: "12", icon: Activity, color: "text-status-review" },
+    { label: "Pending Review", value: "3", icon: Target, color: "text-primary" },
   ];
 
   const copyLink = () => {
@@ -20,86 +22,99 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Greeting */}
       <div>
-        <p className="text-sm text-muted-foreground">Welcome back,</p>
-        <h2 className="text-xl font-bold text-foreground">
-          {partnerProfile.name} <span className="gold-text">⚓</span>
+        <h2 className="text-2xl font-bold text-foreground">
+          Welcome back, {partnerProfile.name} <span className="gold-text">⚓</span>
         </h2>
+        <p className="text-sm text-muted-foreground mt-1">Here's your partner performance at a glance.</p>
       </div>
 
-      <EarningsCard />
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 gap-3">
-        {stats.map((stat) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="card-elevated rounded-xl p-3.5"
-          >
-            <div className="flex items-center gap-2 mb-1.5">
-              <stat.icon className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-          </motion.div>
-        ))}
+      {/* Top Row: Earnings + Stats */}
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-5">
+          <EarningsCard />
+        </div>
+        <div className="col-span-7 grid grid-cols-2 gap-4">
+          {stats.map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="card-elevated rounded-xl p-5 flex flex-col justify-between"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <stat.icon className="h-4 w-4 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{stat.label}</p>
+              </div>
+              <p className={cn("text-3xl font-bold", stat.color)}>{stat.value}</p>
+            </motion.div>
+          ))}
+        </div>
       </div>
 
-      {/* Quick Share */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="card-elevated rounded-xl p-4"
-      >
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Your Magic Link</p>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 rounded-lg bg-background px-3 py-2 text-xs text-muted-foreground font-mono truncate border border-border">
+      {/* Magic Link + Recent Leads */}
+      <div className="grid grid-cols-12 gap-5">
+        {/* Magic Link */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="col-span-5 card-elevated rounded-xl p-5"
+        >
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Your Magic Link</p>
+          <div className="rounded-lg bg-background px-4 py-3 text-sm text-muted-foreground font-mono border border-border break-all mb-4">
             {partnerProfile.referralLink}
           </div>
-          <button
-            onClick={copyLink}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform active:scale-95"
-          >
-            <Copy className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => {
-              window.open(`https://wa.me/?text=${encodeURIComponent(`Apply for a personal loan here: ${partnerProfile.referralLink}`)}`, "_blank");
-            }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald text-accent-foreground transition-transform active:scale-95"
-          >
-            <Share2 className="h-4 w-4" />
-          </button>
-        </div>
-      </motion.div>
+          <div className="flex gap-3">
+            <button
+              onClick={copyLink}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-secondary py-3 text-sm font-semibold text-foreground transition-all hover:bg-secondary/80 active:scale-[0.98]"
+            >
+              <Copy className="h-4 w-4" /> Copy Link
+            </button>
+            <button
+              onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Apply for a personal loan here: ${partnerProfile.referralLink}`)}`, "_blank")}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald py-3 text-sm font-semibold text-accent-foreground transition-all hover:opacity-90 active:scale-[0.98]"
+            >
+              <Share2 className="h-4 w-4" /> WhatsApp
+            </button>
+          </div>
+        </motion.div>
 
-      {/* Recent Leads */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-foreground">Recent Leads</h3>
-          <Link to="/leads" className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
-            View all <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-        <div className="space-y-2">
-          {recentLeads.map((lead) => (
-            <div key={lead.id} className="card-elevated rounded-xl p-3 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">{lead.customerName}</p>
-                <p className="text-xs text-muted-foreground">₹{lead.loanAmount.toLocaleString("en-IN")}</p>
+        {/* Recent Leads */}
+        <div className="col-span-7">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-foreground">Recent Leads</h3>
+            <Link to="/leads" className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="card-elevated rounded-xl divide-y divide-border overflow-hidden">
+            {recentLeads.map((lead) => (
+              <div key={lead.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-secondary/30 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
+                    {lead.customerName.split(" ").map(n => n[0]).join("")}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{lead.customerName}</p>
+                    <p className="text-xs text-muted-foreground">{lead.id} · ₹{lead.loanAmount.toLocaleString("en-IN")}</p>
+                  </div>
+                </div>
+                <StatusBadge status={lead.status} />
               </div>
-              <StatusBadge status={lead.status} />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+// Need cn import
+import { cn } from "@/lib/utils";
 
 export default Dashboard;
