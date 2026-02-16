@@ -5,16 +5,27 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Copy, Share2, Users, TrendingUp, ArrowRight, Target, Activity } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 const Dashboard = () => {
   const recentLeads = mockLeads.slice(0, 5);
 
-  const stats = [
-    { label: "Total Leads", value: partnerProfile.totalLeads, icon: Users, color: "text-foreground" },
-    { label: "Conversion Rate", value: `${partnerProfile.conversionRate}%`, icon: TrendingUp, color: "text-accent" },
-    { label: "Active This Week", value: "12", icon: Activity, color: "text-status-review" },
-    { label: "Pending Review", value: "3", icon: Target, color: "text-primary" },
-  ];
+  const stats = useMemo(() => {
+    const activeThisWeek = mockLeads.filter(
+      (l) => new Date(l.updatedAt) >= new Date(Date.now() - 7 * 86400000)
+    ).length;
+    const pendingReview = mockLeads.filter(
+      (l) => l.status === "UNDERWRITING" || l.status === "DOC_VERIFICATION"
+    ).length;
+
+    return [
+      { label: "Total Leads", value: partnerProfile.totalLeads, icon: Users, color: "text-foreground" },
+      { label: "Conversion Rate", value: `${partnerProfile.conversionRate}%`, icon: TrendingUp, color: "text-accent" },
+      { label: "Active This Week", value: activeThisWeek, icon: Activity, color: "text-status-review" },
+      { label: "Pending Review", value: pendingReview, icon: Target, color: "text-primary" },
+    ];
+  }, []);
 
   const copyLink = () => {
     navigator.clipboard.writeText(partnerProfile.referralLink);
@@ -32,11 +43,11 @@ const Dashboard = () => {
       </div>
 
       {/* Top Row: Earnings + Stats */}
-      <div className="grid grid-cols-12 gap-5">
-        <div className="col-span-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="lg:col-span-5">
           <EarningsCard />
         </div>
-        <div className="col-span-7 grid grid-cols-2 gap-4">
+        <div className="lg:col-span-7 grid grid-cols-2 gap-4">
           {stats.map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -56,13 +67,13 @@ const Dashboard = () => {
       </div>
 
       {/* Magic Link + Recent Leads */}
-      <div className="grid grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Magic Link */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="col-span-5 card-elevated rounded-xl p-5"
+          className="lg:col-span-5 card-elevated rounded-xl p-5"
         >
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Your Magic Link</p>
           <div className="rounded-lg bg-background px-4 py-3 text-sm text-muted-foreground font-mono border border-border break-all mb-4">
@@ -85,7 +96,7 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Recent Leads */}
-        <div className="col-span-7">
+        <div className="lg:col-span-7">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-foreground">Recent Leads</h3>
             <Link to="/leads" className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
@@ -113,8 +124,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-// Need cn import
-import { cn } from "@/lib/utils";
 
 export default Dashboard;

@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { LeadStatus, STATUS_MAP } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 
@@ -10,18 +11,23 @@ const colorMap: Record<string, string> = {
   "status-rejected": "bg-status-rejected/15 text-status-rejected",
 };
 
-const StatusBadge = ({ status }: { status: LeadStatus }) => {
-  const info = STATUS_MAP[status];
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide",
-        colorMap[info.colorKey]
-      )}
-    >
-      {info.label}
-    </span>
-  );
-};
+const StatusBadge = forwardRef<HTMLSpanElement, { status: LeadStatus }>(
+  ({ status }, ref) => {
+    const info = STATUS_MAP[status];
+    return (
+      <span
+        ref={ref}
+        className={cn(
+          "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide",
+          colorMap[info.colorKey]
+        )}
+      >
+        {info.label}
+      </span>
+    );
+  }
+);
+
+StatusBadge.displayName = "StatusBadge";
 
 export default StatusBadge;
