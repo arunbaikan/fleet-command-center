@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { mockLeads, LeadStatus } from "@/lib/mockData";
 import LeadCard from "@/components/fleet/LeadCard";
 import { cn } from "@/lib/utils";
@@ -18,15 +18,32 @@ const Leads = () => {
   const [activeFilter, setActiveFilter] = useState<LeadStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
 
-  const filtered = mockLeads
-    .filter((l) => activeFilter === "ALL" || l.status === activeFilter)
-    .filter((l) => !search || l.customerName.toLowerCase().includes(search.toLowerCase()) || l.id.toLowerCase().includes(search.toLowerCase()));
+  const filtered = useMemo(
+    () =>
+      mockLeads
+        .filter((l) => activeFilter === "ALL" || l.status === activeFilter)
+        .filter(
+          (l) =>
+            !search ||
+            l.customerName.toLowerCase().includes(search.toLowerCase()) ||
+            l.id.toLowerCase().includes(search.toLowerCase())
+        ),
+    [activeFilter, search]
+  );
+
+  const counts = useMemo(() => {
+    const map: Record<string, number> = { ALL: mockLeads.length };
+    mockLeads.forEach((l) => {
+      map[l.status] = (map[l.status] || 0) + 1;
+    });
+    return map;
+  }, []);
 
   return (
     <div className="space-y-5">
       {/* Search + Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+        <div className="relative w-full md:flex-1 md:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             value={search}
@@ -35,7 +52,7 @@ const Leads = () => {
             className="w-full rounded-xl border border-border bg-background pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
         </div>
-        <div className="flex gap-1.5 overflow-x-auto">
+        <div className="flex gap-1.5 overflow-x-auto w-full md:w-auto">
           {filters.map((f) => (
             <button
               key={f.value}
@@ -47,7 +64,7 @@ const Leads = () => {
                   : "bg-secondary text-muted-foreground hover:text-foreground"
               )}
             >
-              {f.label}
+              {f.label} ({counts[f.value] || 0})
             </button>
           ))}
         </div>
