@@ -98,12 +98,6 @@ const LeadSubmit = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
-  const validatePan = (value: string) => {
-    if (!value) return "PAN is required";
-    const regex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-    return regex.test(value.toUpperCase()) ? null : "Invalid PAN format (e.g. ABCDE1234F)";
-  };
-
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -127,9 +121,6 @@ const LeadSubmit = () => {
       if (!formData.state) newErrors.state = "State is required";
       if (!formData.pincode) newErrors.pincode = "Pincode is required";
       if (!formData.mobileNumber) newErrors.mobileNumber = "Mobile number is required";
-      
-      const panErr = validatePan(formData.panCard);
-      if (panErr) newErrors.panCard = panErr;
     }
 
     if (currentStep === 1) {
@@ -137,14 +128,11 @@ const LeadSubmit = () => {
       if (!formData.companyName) newErrors.companyName = "Company Name is Required";
       if (!formData.monthlyIncome) newErrors.monthlyIncome = "Monthly Income is Required";
       if (!formData.cibilScore) newErrors.cibilScore = "CIBIL Score is Required";
-      if (!formData.employmentCategory) newErrors.employmentCategory = "Category is required";
-      if (!formData.salaryMode) newErrors.salaryMode = "Salary mode is required";
     }
 
     if (currentStep === 2) {
       if (!formData.loanType) newErrors.loanType = "Loan Type is Required";
       if (!formData.loanAmount) newErrors.loanAmount = "Loan Amount is Required";
-      if (!formData.loanTenure) newErrors.loanTenure = "Tenure is required";
     }
 
     setErrors(newErrors);
@@ -153,16 +141,21 @@ const LeadSubmit = () => {
 
   const handleNext = async () => {
     if (!validateStep()) {
-      toast.error("Please fill all required fields correctly");
+      toast.error("Please fill all required fields");
       return;
     }
 
     setIsLoading(true);
     try {
-      if (currentStep < 3) {
+      if (currentStep === 0) {
         await updateCreditReport(formData);
-        setCurrentStep(currentStep + 1);
-      } else {
+        setCurrentStep(1);
+      } else if (currentStep === 1) {
+        await updateCreditReport(formData);
+        setCurrentStep(2);
+      } else if (currentStep === 2) {
+        setCurrentStep(3);
+      } else if (currentStep === 3) {
         if (!termsAccepted || !privacyAccepted) {
           toast.error("Please accept Terms & Privacy Policy");
           return;
@@ -208,28 +201,28 @@ const LeadSubmit = () => {
 
       setFormData(prev => ({
         ...prev,
-        firstName: apiData.firstName || "",
-        lastName: apiData.lastName || "",
-        middleName: apiData.middleName || "",
-        dateOfBirth: apiData.dateOfBirth ? apiData.dateOfBirth.split("T")[0] : "",
-        panCard: apiData.panCard || "",
+        firstName: apiData.firstName,
+        lastName: apiData.lastName,
+        middleName: apiData.middleName,
+        dateOfBirth: apiData.dateOfBirth.split("T")[0],
+        panCard: apiData.panCard,
         email: emails[0] || "",
-        uanNumber: apiData.uanNumber || "",
-        employmentStatus: apiData.employmentStatus || "",
-        companyName: apiData.companyName || "",
-        monthlyIncome: apiData.monthlyIncome?.toString() || "",
+        uanNumber: apiData.uanNumber,
+        employmentStatus: apiData.employmentStatus,
+        companyName: apiData.companyName,
+        monthlyIncome: apiData.monthlyIncome.toString(),
         addressLine1: apiData.addresses[0]?.streetAddress || "",
         state: apiData.addresses[0]?.state || "",
         pincode: apiData.addresses[0]?.pincode || "",
-        cibilScore: apiData.cibilScore?.toString() || "",
-        recentEnquiries: apiData.last6MonthsEnquiryCount?.toString() || "",
-        settlements: apiData.settlements?.toString() || "",
-        emiBounces: apiData.emiBounces?.toString() || "",
-        creditCardUtilization: apiData.creaditCardUtilization?.toString() || "",
-        existingEmi: apiData.existingEmi?.toString() || "",
-        loanTenure: apiData.loanTenure?.toString() || "",
-        salaryMode: apiData.salaryMode || "",
-        employmentCategory: apiData.employmentCategory || "",
+        cibilScore: apiData.cibilScore.toString(),
+        recentEnquiries: apiData.last6MonthsEnquiryCount.toString(),
+        settlements: apiData.settlements.toString(),
+        emiBounces: apiData.emiBounces.toString(),
+        creditCardUtilization: apiData.creaditCardUtilization.toString(),
+        existingEmi: apiData.existingEmi.toString(),
+        loanTenure: apiData.loanTenure.toString(),
+        salaryMode: apiData.salaryMode,
+        employmentCategory: apiData.employmentCategory,
       }));
       toast.success("Details auto-filled from credit report!");
     } catch (error) {
@@ -324,24 +317,6 @@ const LeadSubmit = () => {
               </motion.div>
             ) : (
               <div className="space-y-6">
-                {isLoading && currentStep === 0 && formData.mobileNumber.length >= 10 && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="flex flex-col items-center gap-4 w-full max-w-xs px-6">
-                      <p className="text-lg font-bold text-foreground animate-pulse">
-                        Fetching <span className="text-primary">credit profile...</span>
-                      </p>
-                      <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-                        <motion.div 
-                          className="h-full bg-primary"
-                          initial={{ width: "0%" }}
-                          animate={{ width: "100%" }}
-                          transition={{ duration: 1.5, repeat: Infinity }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <StepIndicator steps={steps} currentStep={currentStep + 1} />
 
                 {currentStep === 0 && (
@@ -352,7 +327,7 @@ const LeadSubmit = () => {
                       <FormInput label="Middle Name" value={formData.middleName} onChange={(v) => updateFormData("middleName", v)} />
                       <FormInput label="Last Name" value={formData.lastName} onChange={(v) => updateFormData("lastName", v)} required error={errors.lastName} />
                       <FormInput label="Date of Birth" value={formData.dateOfBirth} onChange={(v) => updateFormData("dateOfBirth", v)} type="date" required error={errors.dateOfBirth} />
-                      <FormInput label="PAN Card" value={formData.panCard} onChange={(v) => updateFormData("panCard", v)} required error={errors.panCard} placeholder="ABCDE1234F" />
+                      <FormInput label="PAN Card" value={formData.panCard} onChange={(v) => updateFormData("panCard", v)} />
                       {emailOptions.length > 1 ? (
                         <FormSelect label="Email" value={formData.email} onChange={(v) => updateFormData("email", v)} options={emailOptions.map(e => ({ value: e, label: e }))} required error={errors.email} />
                       ) : (
@@ -370,9 +345,7 @@ const LeadSubmit = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <FormSelect label="Employment Status" value={formData.employmentStatus} onChange={(v) => updateFormData("employmentStatus", v)} options={employmentStatuses} required error={errors.employmentStatus} />
                       <FormInput label="Company Name" value={formData.companyName} onChange={(v) => updateFormData("companyName", v)} required error={errors.companyName} />
-                      <FormInput label="Employment Category" value={formData.employmentCategory} onChange={(v) => updateFormData("employmentCategory", v)} required error={errors.employmentCategory} placeholder="e.g. Category A" />
                       <FormInput label="Monthly Income (₹)" value={formData.monthlyIncome} onChange={(v) => updateFormData("monthlyIncome", v)} type="number" required error={errors.monthlyIncome} />
-                      <FormSelect label="Salary Mode" value={formData.salaryMode} onChange={(v) => updateFormData("salaryMode", v)} options={[{value: "bank_transfer", label: "Bank Transfer"}, {value: "cash", label: "Cash"}]} required error={errors.salaryMode} />
                       <FormInput label="CIBIL Score" value={formData.cibilScore} onChange={(v) => updateFormData("cibilScore", v)} required error={errors.cibilScore} />
                       <FormInput label="UAN / PF Number" value={formData.uanNumber} onChange={(v) => updateFormData("uanNumber", v)} />
                       <FormInput label="Existing EMI (₹)" value={formData.existingEmi} onChange={(v) => updateFormData("existingEmi", v)} type="number" />
@@ -382,10 +355,9 @@ const LeadSubmit = () => {
 
                 {currentStep === 2 && (
                   <FormCard title="Loan & Documents" subtitle="Select loan type and upload documents.">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
                       <FormSelect label="Loan Type" value={formData.loanType} onChange={(v) => updateFormData("loanType", v)} options={loanTypes} required error={errors.loanType} />
                       <FormInput label="Loan Amount (₹)" value={formData.loanAmount} onChange={(v) => updateFormData("loanAmount", v)} type="number" required error={errors.loanAmount} />
-                      <FormInput label="Tenure (Months)" value={formData.loanTenure} onChange={(v) => updateFormData("loanTenure", v)} type="number" required error={errors.loanTenure} />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <FileUploadZone label="Applicant Photo" onFileSelect={(f) => setDocuments(d => ({ ...d, photo: f }))} required />
@@ -396,22 +368,6 @@ const LeadSubmit = () => {
 
                 {currentStep === 3 && (
                   <div className="space-y-6">
-                    {/* Header Summary Card */}
-                    <div className="bg-gradient-to-r from-primary to-accent rounded-2xl p-6 text-primary-foreground shadow-xl">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                          <p className="text-primary-foreground/80 text-xs font-medium mb-1 uppercase tracking-wider">Application Summary</p>
-                          <h2 className="text-2xl font-bold">{formData.firstName} {formData.middleName} {formData.lastName}</h2>
-                          <p className="text-primary-foreground/80 text-sm mt-1">{formData.email}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-primary-foreground/80 text-xs font-medium mb-1 uppercase tracking-wider">Requested Amount</p>
-                          <p className="text-3xl font-bold">₹{Number(formData.loanAmount).toLocaleString("en-IN")}</p>
-                          <p className="text-primary-foreground/80 text-sm mt-1">{loanTypes.find(l => l.value === formData.loanType)?.label}</p>
-                        </div>
-                      </div>
-                    </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <SummarySection title="Personal Details" icon={User}>
                         <SummaryRow label="Full Name" value={`${formData.firstName} ${formData.middleName} ${formData.lastName}`} icon={User} />
@@ -422,8 +378,7 @@ const LeadSubmit = () => {
                       <SummarySection title="Employment" icon={Briefcase}>
                         <SummaryRow label="Status" value={formData.employmentStatus} icon={Briefcase} />
                         <SummaryRow label="Company" value={formData.companyName} icon={Building} />
-                        <SummaryRow label="Income" value={`₹${Number(formData.monthlyIncome).toLocaleString("en-IN")}`} icon={IndianRupee} highlighted />
-                        <SummaryRow label="Category" value={formData.employmentCategory} />
+                        <SummaryRow label="Income" value={`₹${formData.monthlyIncome}`} icon={IndianRupee} highlighted />
                       </SummarySection>
                     </div>
 
@@ -432,7 +387,7 @@ const LeadSubmit = () => {
                       <div className="flex items-start space-x-3 p-3 rounded-md border border-border">
                         <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(c) => setTermsAccepted(!!c)} />
                         <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                          I hereby declare that all the information provided is true and accurate. I authorize the bank to verify my details.
+                          I hereby declare that all the information provided is true and accurate.
                         </label>
                       </div>
                       <div className="flex items-start space-x-3 p-3 rounded-md border border-border">
