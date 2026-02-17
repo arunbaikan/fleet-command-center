@@ -4,62 +4,62 @@
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 45 20% 92%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 10%;
 
-    --card: 222 40% 10%;
-    --card-foreground: 45 20% 92%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
 
-    --popover: 222 40% 10%;
-    --popover-foreground: 45 20% 92%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
 
-    --primary: 42 92% 56%;
-    --primary-foreground: 222 47% 6%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 30% 16%;
-    --secondary-foreground: 45 20% 85%;
+    --secondary: 260 20% 95%;
+    --secondary-foreground: 240 10% 25%;
 
-    --muted: 222 25% 14%;
-    --muted-foreground: 220 15% 55%;
+    --muted: 260 15% 95%;
+    --muted-foreground: 240 5% 46%;
 
-    --accent: 160 70% 42%;
-    --accent-foreground: 222 47% 6%;
+    --accent: 280 70% 50%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 25% 18%;
-    --input: 222 25% 18%;
-    --ring: 42 92% 56%;
+    --border: 260 15% 90%;
+    --input: 260 15% 90%;
+    --ring: 262 83% 58%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 222 40% 8%;
-    --sidebar-foreground: 45 20% 92%;
-    --sidebar-primary: 42 92% 56%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 30% 16%;
-    --sidebar-accent-foreground: 45 20% 85%;
-    --sidebar-border: 222 25% 18%;
-    --sidebar-ring: 42 92% 56%;
+    --sidebar-background: 260 20% 98%;
+    --sidebar-foreground: 240 10% 10%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 260 20% 93%;
+    --sidebar-accent-foreground: 240 10% 25%;
+    --sidebar-border: 260 15% 90%;
+    --sidebar-ring: 262 83% 58%;
 
     /* Custom tokens */
-    --gold-glow: 42 92% 56%;
-    --gold-dim: 42 60% 35%;
-    --emerald: 160 70% 42%;
-    --emerald-dim: 160 50% 25%;
-    --surface-elevated: 222 35% 13%;
-    --status-draft: 220 15% 55%;
-    --status-pending: 42 92% 56%;
+    --purple-glow: 262 83% 58%;
+    --purple-dim: 262 50% 40%;
+    --violet: 280 70% 50%;
+    --violet-dim: 280 40% 35%;
+    --surface-elevated: 260 20% 98%;
+    --status-draft: 240 5% 46%;
+    --status-pending: 262 83% 58%;
     --status-review: 210 80% 55%;
-    --status-approved: 160 70% 42%;
-    --status-disbursed: 160 70% 42%;
+    --status-approved: 160 60% 42%;
+    --status-disbursed: 160 60% 42%;
     --status-rejected: 0 72% 55%;
   }
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 45 20% 92%;
+    --background: 260 20% 6%;
+    --foreground: 260 10% 92%;
   }
 }
 
@@ -74,23 +74,37 @@
 }
 
 @layer utilities {
-  .gold-gradient {
-    background: linear-gradient(135deg, hsl(42 92% 56%), hsl(32 90% 48%));
+  .purple-gradient {
+    background: linear-gradient(135deg, hsl(262 83% 58%), hsl(280 70% 50%));
   }
-  .gold-text {
-    background: linear-gradient(135deg, hsl(42 92% 56%), hsl(32 90% 48%));
+  .purple-text {
+    background: linear-gradient(135deg, hsl(262 83% 58%), hsl(280 70% 50%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .card-glow {
-    box-shadow: 0 0 40px -12px hsl(42 92% 56% / 0.15);
+    box-shadow: 0 0 40px -12px hsl(262 83% 58% / 0.2);
   }
   .card-elevated {
     background: hsl(var(--surface-elevated));
     border: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 3px 0 hsl(240 10% 10% / 0.04);
+  }
+  .violet-glow {
+    box-shadow: 0 0 30px -8px hsl(280 70% 50% / 0.25);
+  }
+  /* Keep old names as aliases for compatibility */
+  .gold-gradient {
+    background: linear-gradient(135deg, hsl(262 83% 58%), hsl(280 70% 50%));
+  }
+  .gold-text {
+    background: linear-gradient(135deg, hsl(262 83% 58%), hsl(280 70% 50%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .emerald-glow {
-    box-shadow: 0 0 30px -8px hsl(160 70% 42% / 0.25);
+    box-shadow: 0 0 30px -8px hsl(280 70% 50% / 0.25);
   }
 }

@@ -28,7 +28,7 @@ const LeadCard = forwardRef<HTMLDivElement, { lead: Lead; index: number }>(
           <div>
             <p className="text-lg font-bold text-foreground">₹{lead.loanAmount.toLocaleString("en-IN")}</p>
             {lead.commission && (
-              <p className="text-xs font-medium text-accent">+₹{lead.commission.toLocaleString("en-IN")} earned</p>
+              <p className="text-xs font-medium text-primary">+₹{lead.commission.toLocaleString("en-IN")} earned</p>
             )}
             {lead.rejectionReason && (
               <p className="text-xs text-destructive font-medium mt-0.5">Reason: {lead.rejectionReason}</p>
@@ -37,7 +37,7 @@ const LeadCard = forwardRef<HTMLDivElement, { lead: Lead; index: number }>(
           <div className="flex gap-2">
             <button
               onClick={() => window.open(`https://wa.me/${lead.mobile.replace(/\*/g, '')}`, "_blank")}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald/10 text-accent transition-colors hover:bg-emerald/20"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
             >
               <MessageCircle className="h-4 w-4" />
             </button>

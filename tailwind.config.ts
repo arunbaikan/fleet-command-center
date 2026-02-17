@@ -48,12 +48,12 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         gold: {
-          DEFAULT: "hsl(var(--gold-glow))",
-          dim: "hsl(var(--gold-dim))",
+          DEFAULT: "hsl(var(--purple-glow))",
+          dim: "hsl(var(--purple-dim))",
         },
         emerald: {
-          DEFAULT: "hsl(var(--emerald))",
-          dim: "hsl(var(--emerald-dim))",
+          DEFAULT: "hsl(var(--violet))",
+          dim: "hsl(var(--violet-dim))",
         },
         "surface-elevated": "hsl(var(--surface-elevated))",
         status: {

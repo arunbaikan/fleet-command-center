@@ -88,7 +88,7 @@ const Dashboard = () => {
             </button>
             <button
               onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Apply for a personal loan here: ${partnerProfile.referralLink}`)}`, "_blank")}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald py-3 text-sm font-semibold text-accent-foreground transition-all hover:opacity-90 active:scale-[0.98]"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl purple-gradient py-3 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]"
             >
               <Share2 className="h-4 w-4" /> WhatsApp
             </button>
