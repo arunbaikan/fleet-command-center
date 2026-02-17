@@ -17,7 +17,6 @@ import {
   Building,
   Home,
   Smartphone,
-  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,8 +29,6 @@ import { cn } from "@/lib/utils";
 import {
   fetchCreditReport,
   updateCreditReport,
-  sendOtpToMobile,
-  verifyOtpApi,
 } from "@/api/api";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
@@ -59,6 +56,12 @@ const employmentStatuses = [
   { value: "self-employed", label: "Self Employed" },
   { value: "business", label: "Business Owner" },
   { value: "retired", label: "Retired" },
+];
+
+const residentialStatuses = [
+  { value: "owned", label: "Owned" },
+  { value: "rented", label: "Rented" },
+  { value: "family", label: "Living with Family" },
 ];
 
 const getTodayISODate = () => {
@@ -103,16 +106,13 @@ const buildEmploymentDetailsPayload = (data: any) => ({
 });
 
 const LoanApplication = () => {
-  const [isVerified, setIsVerified] = useState(false);
-  const [verificationStep, setVerificationStep] = useState<'mobile' | 'otp'>('mobile');
-  const [mobileNumber, setMobileNumber] = useState("");
-  const [otp, setOtp] = useState("");
-  
   const [currentStep, setCurrentStep] = useState(0);
   const [emailOptions, setEmailOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [pageLoading, setPageLoading] = useState(false);
+  const [needsMobile, setNeedsMobile] = useState(false);
+  const [tempMobile, setTempMobile] = useState("");
 
   const navigate = useNavigate();
 
@@ -147,43 +147,6 @@ const LoanApplication = () => {
     employmentCategory: "",
     salaryMode: "",
   });
-
-  const handleSendOtp = async () => {
-    if (!/^\d{10}$/.test(mobileNumber)) {
-      toast.error("Please enter a valid 10-digit mobile number");
-      return;
-    }
-    setIsLoading(true);
-    try {
-      // In a real app, you'd call sendOtpToMobile(mobileNumber)
-      // For now, we'll simulate success
-      toast.success("OTP sent successfully to " + mobileNumber);
-      setVerificationStep('otp');
-    } catch (error) {
-      toast.error("Failed to send OTP");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 4 && otp.length !== 6) {
-      toast.error("Please enter a valid OTP");
-      return;
-    }
-    setIsLoading(true);
-    try {
-      // Simulate verification
-      sessionStorage.setItem("mobile_number", mobileNumber);
-      toast.success("Mobile number verified!");
-      setIsVerified(true);
-      autoFillUserDetails();
-    } catch (error) {
-      toast.error("Invalid OTP");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const isEmpty = (v: any) => v === "" || v === null || v === undefined;
 
@@ -258,13 +221,20 @@ const LoanApplication = () => {
   const [consentError, setConsentError] = useState(false);
 
   const handleNext = async () => {
-    if (currentStep === 3 && (!termsAccepted || !privacyAccepted)) {
-      setConsentError(true);
-      toast.error("Please accept Terms & Privacy Policy");
-      return;
-    } else {
+    if (currentStep === 3) {
+      if (!termsAccepted || !privacyAccepted) {
+        setConsentError(true);
+        toast.error("Please accept Terms & Privacy Policy");
+        return;
+      }
       setConsentError(false);
+      setIsLoading(true);
+      // Final step logic
+      navigate("/eligible-loans");
+      setIsLoading(false);
+      return;
     }
+
     if (!validateStep()) {
       toast.error("Please fill all required fields");
       return;
@@ -315,11 +285,6 @@ const LoanApplication = () => {
       }
       return;
     }
-
-    if (currentStep === 3) {
-      setIsLoading(false);
-      navigate("/leads");
-    }
   };
 
   const handleBack = () => {
@@ -327,8 +292,7 @@ const LoanApplication = () => {
   };
 
   const handleSubmit = () => {
-    toast.success("Application submitted successfully!");
-    navigate("/leads");
+    navigate("/compare-loan");
   };
 
   const updateFormData = (field: string, value: any) => {
@@ -408,12 +372,35 @@ const LoanApplication = () => {
     </div>
   );
 
+  const DocumentStatus = ({ label, file, icon: Icon }: any) => (
+    <div className="flex justify-between items-center py-2.5 border-b border-border/30 last:border-0">
+      <span className="text-muted-foreground text-sm flex items-center gap-2">
+        {Icon && <Icon className="w-4 h-4 text-primary/60" />}
+        {label}
+      </span>
+      {file ? (
+        <span className="text-sm font-medium text-green-600 flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          Uploaded
+        </span>
+      ) : (
+        <span className="text-sm font-medium text-destructive flex items-center gap-1.5 bg-destructive/10 px-2.5 py-1 rounded-full">
+          <AlertCircle className="w-3.5 h-3.5" />
+          Missing
+        </span>
+      )}
+    </div>
+  );
+
   const autoFillUserDetails = async () => {
+    const mobile = sessionStorage.getItem("mobile_number");
+    if (!mobile) {
+      setNeedsMobile(true);
+      return;
+    }
+
     try {
       setPageLoading(true);
-      const mobile = sessionStorage.getItem("mobile_number");
-      if (!mobile) return;
-      
       const resp = await fetchCreditReport({ mobileNumber: mobile });
       const apiData = resp?.data?.data;
       
@@ -432,6 +419,16 @@ const LoanApplication = () => {
     } finally {
       setPageLoading(false);
     }
+  };
+
+  const handleMobileSubmit = () => {
+    if (!/^\d{10}$/.test(tempMobile)) {
+      toast.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    sessionStorage.setItem("mobile_number", tempMobile);
+    setNeedsMobile(false);
+    autoFillUserDetails();
   };
 
   async function uploadFinancialDocsFrontend({ userId, requestedLoanAmount, requestedLoanTenure, loanType }: any) {
@@ -463,12 +460,43 @@ const LoanApplication = () => {
   };
 
   useEffect(() => {
-    const savedMobile = sessionStorage.getItem("mobile_number");
-    if (savedMobile) {
-      setIsVerified(true);
-      autoFillUserDetails();
-    }
+    autoFillUserDetails();
   }, []);
+
+  if (needsMobile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/20 px-4">
+        <ToastContainer position="top-right" autoClose={3000} />
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Welcome to <span className="text-[#7c3bed]">Happirate</span>
+            </h1>
+            <p className="text-muted-foreground">Enter your mobile to start your application</p>
+          </div>
+          <FormCard title="Enter Mobile Number">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                <Smartphone className="w-5 h-5 text-primary" />
+                <p className="text-sm text-muted-foreground">We'll use this to fetch your credit profile.</p>
+              </div>
+              <FormInput 
+                label="Mobile Number" 
+                placeholder="9876543210" 
+                value={tempMobile} 
+                onChange={(v) => setTempMobile(v.replace(/\D/g, "").slice(0, 10))}
+                type="tel"
+                required
+              />
+              <Button onClick={handleMobileSubmit} className="w-full h-12">
+                Continue
+              </Button>
+            </div>
+          </FormCard>
+        </div>
+      </div>
+    );
+  }
 
   if (pageLoading) {
     return (
@@ -480,72 +508,6 @@ const LoanApplication = () => {
           <div className="w-full h-5 bg-white border-2 border-slate-200 rounded-full p-1 shadow-sm">
             <div className="h-full bg-gradient-to-r from-[#7c3aed] to-[#a855f7] rounded-full animate-pulse w-[40%]" />
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isVerified) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/20 px-4">
-        <ToastContainer position="top-right" autoClose={3000} />
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome to <span className="text-[#7c3bed]">Happirate</span>
-            </h1>
-            <p className="text-muted-foreground">Verify your mobile to start your application</p>
-          </div>
-
-          <FormCard title={verificationStep === 'mobile' ? "Enter Mobile Number" : "Verify OTP"}>
-            <div className="space-y-6">
-              {verificationStep === 'mobile' ? (
-                <>
-                  <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                    <Smartphone className="w-5 h-5 text-primary" />
-                    <p className="text-sm text-muted-foreground">We'll send a verification code to this number.</p>
-                  </div>
-                  <FormInput 
-                    label="Mobile Number" 
-                    placeholder="9876543210" 
-                    value={mobileNumber} 
-                    onChange={(v) => setMobileNumber(v.replace(/\D/g, "").slice(0, 10))}
-                    type="tel"
-                    required
-                  />
-                  <Button onClick={handleSendOtp} disabled={isLoading} className="w-full h-12">
-                    {isLoading ? <Loader size={20} /> : "Send OTP"}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                    <Lock className="w-5 h-5 text-primary" />
-                    <p className="text-sm text-muted-foreground">Enter the code sent to +91 {mobileNumber}</p>
-                  </div>
-                  <FormInput 
-                    label="OTP Code" 
-                    placeholder="Enter OTP" 
-                    value={otp} 
-                    onChange={(v) => setOtp(v.replace(/\D/g, "").slice(0, 6))}
-                    type="text"
-                    required
-                  />
-                  <div className="flex flex-col gap-3">
-                    <Button onClick={handleVerifyOtp} disabled={isLoading} className="w-full h-12">
-                      {isLoading ? <Loader size={20} /> : "Verify & Continue"}
-                    </Button>
-                    <button 
-                      onClick={() => setVerificationStep('mobile')} 
-                      className="text-sm text-primary hover:underline font-medium"
-                    >
-                      Change Mobile Number
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </FormCard>
         </div>
       </div>
     );
@@ -728,9 +690,14 @@ const LoanApplication = () => {
               {isLoading ? <Loader size={20} /> : <><span className="mr-2">Next</span><ArrowRight className="w-4 h-4" /></>}
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={!termsAccepted || !privacyAccepted} className="h-12 px-8">
-              <Send className="w-4 h-4 mr-2" /> Submit Application
-            </Button>
+            <div className="flex gap-3">
+              <Button onClick={handleNext} disabled={isLoading} className="h-12 px-8">
+                {isLoading ? <Loader size={20} /> : <><span className="mr-2">Next</span><ArrowRight className="w-4 h-4" /></>}
+              </Button>
+              <Button onClick={handleSubmit} disabled={!termsAccepted || !privacyAccepted} className="h-12 px-8">
+                <Send className="w-4 h-4 mr-2" /> Submit Application
+              </Button>
+            </div>
           )}
         </div>
       </div>
