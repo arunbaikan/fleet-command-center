@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -107,6 +107,7 @@ const LoanApplication = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [pageLoading, setPageLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [needsMobile, setNeedsMobile] = useState(false);
   const [tempMobile, setTempMobile] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -304,7 +305,7 @@ const LoanApplication = () => {
     }
   };
 
-  const mapApiResponseToFormData = (apiData: any, mobile: string) => {
+  const mapApiResponseToFormData = useCallback((apiData: any, mobile: string) => {
     const primaryEmail = apiData.emails?.[0]?.email || "";
     const addresses = Array.isArray(apiData?.addresses) ? apiData?.addresses : [];
     const residenceAddress = addresses.find((a: any) => a.type === "Residence") || addresses[0] || {};
@@ -341,37 +342,10 @@ const LoanApplication = () => {
       salaryMode: apiData.salaryMode ?? "",
       employmentCategory: apiData.employmentCategory ?? "",
     };
-  };
+  }, []);
 
-  const SummarySection = ({ title, icon: Icon, children }: any) => (
-    <div className="bg-card rounded-xl border border-border/50 overflow-hidden shadow-sm">
-      <div className="bg-gradient-to-r from-primary/10 to-accent/30 px-5 py-3 border-b border-border/50">
-        <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-          <Icon className="w-4 h-4 text-primary" />
-          {title}
-        </h3>
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-
-  const SummaryRow = ({ label, value, icon: Icon, highlighted }: any) => (
-    <div className="flex justify-between items-start gap-4 py-2.5 border-b border-border/30 last:border-0">
-      <span className="text-muted-foreground text-sm flex items-center gap-2">
-        {Icon && <Icon className="w-4 h-4 text-primary/60" />}
-        {label}
-      </span>
-      <span className={cn(
-        "text-sm font-medium text-right max-w-[60%] break-words whitespace-normal leading-relaxed",
-        highlighted ? "text-primary font-semibold" : "text-foreground"
-      )}>
-        {value || "—"}
-      </span>
-    </div>
-  );
-
-  const autoFillUserDetails = async () => {
-    const mobile = sessionStorage.getItem("mobile_number");
+  const autoFillUserDetails = useCallback(async (mobileOverride?: string) => {
+    const mobile = mobileOverride || sessionStorage.getItem("mobile_number");
     if (!mobile) {
       setNeedsMobile(true);
       return;
@@ -379,7 +353,11 @@ const LoanApplication = () => {
 
     try {
       setPageLoading(true);
+      setLoadingProgress(20);
+      
       const resp = await fetchCreditReport({ mobileNumber: mobile });
+      setLoadingProgress(60);
+      
       const apiData = resp?.data?.data;
       
       if (apiData) {
@@ -391,13 +369,16 @@ const LoanApplication = () => {
         const uniqueEmails = [...new Set(apiEmails)] as string[];
         setEmailOptions(uniqueEmails);
         setFormData(mapApiResponseToFormData(apiData, mobile));
+        setLoadingProgress(100);
       }
     } catch (error) {
       console.error("Error in auto filling user details", error);
+      toast.error("Failed to fetch profile. You can still fill details manually.");
     } finally {
-      setPageLoading(false);
+      // Small delay for smooth transition
+      setTimeout(() => setPageLoading(false), 300);
     }
-  };
+  }, [mapApiResponseToFormData]);
 
   const handleSendOtp = async () => {
     if (!/^\d{10}$/.test(tempMobile)) {
@@ -431,7 +412,7 @@ const LoanApplication = () => {
       if (otp === "123456") {
         sessionStorage.setItem("mobile_number", tempMobile);
         setNeedsMobile(false);
-        autoFillUserDetails();
+        await autoFillUserDetails(tempMobile);
         toast.success("OTP verified successfully (Demo Mode)");
         setIsLoading(false);
         return;
@@ -440,7 +421,7 @@ const LoanApplication = () => {
       await verifyOtpApi({ mobileNumber: tempMobile, otp });
       sessionStorage.setItem("mobile_number", tempMobile);
       setNeedsMobile(false);
-      autoFillUserDetails();
+      await autoFillUserDetails(tempMobile);
       toast.success("OTP verified successfully");
     } catch (error: any) {
       console.error("Verify Error:", error);
@@ -481,7 +462,34 @@ const LoanApplication = () => {
 
   useEffect(() => {
     autoFillUserDetails();
-  }, []);
+  }, [autoFillUserDetails]);
+
+  const SummarySection = ({ title, icon: Icon, children }: any) => (
+    <div className="bg-card rounded-xl border border-border/50 overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-r from-primary/10 to-accent/30 px-5 py-3 border-b border-border/50">
+        <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+          <Icon className="w-4 h-4 text-primary" />
+          {title}
+        </h3>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+
+  const SummaryRow = ({ label, value, icon: Icon, highlighted }: any) => (
+    <div className="flex justify-between items-start gap-4 py-2.5 border-b border-border/30 last:border-0">
+      <span className="text-muted-foreground text-sm flex items-center gap-2">
+        {Icon && <Icon className="w-4 h-4 text-primary/60" />}
+        {label}
+      </span>
+      <span className={cn(
+        "text-sm font-medium text-right max-w-[60%] break-words whitespace-normal leading-relaxed",
+        highlighted ? "text-primary font-semibold" : "text-foreground"
+      )}>
+        {value || "—"}
+      </span>
+    </div>
+  );
 
   if (needsMobile) {
     return (
@@ -550,13 +558,25 @@ const LoanApplication = () => {
 
   if (pageLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center justify-center gap-8 w-full max-w-md px-6">
-          <p className="text-xl md:text-2xl font-bold text-slate-800 animate-pulse">
-            Loading your <span className="text-[#7c3aed]">credit profile...</span>
-          </p>
-          <div className="w-full h-5 bg-white border-2 border-slate-200 rounded-full p-1 shadow-sm">
-            <div className="h-full bg-gradient-to-r from-[#7c3aed] to-[#a855f7] rounded-full animate-pulse w-[40%]" />
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <CreditCard className="w-8 h-8 text-primary animate-pulse" />
+            </div>
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-xl md:text-2xl font-bold text-foreground">
+              Fetching your <span className="text-primary">credit profile...</span>
+            </p>
+            <p className="text-sm text-muted-foreground">This usually takes just a few seconds.</p>
+          </div>
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden shadow-inner">
+            <div 
+              className="h-full bg-primary transition-all duration-500 ease-out" 
+              style={{ width: `${loadingProgress}%` }}
+            />
           </div>
         </div>
       </div>
