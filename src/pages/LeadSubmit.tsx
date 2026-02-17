@@ -1,49 +1,266 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserPlus, Share2, Copy, CheckCircle2, AlertCircle, Send } from "lucide-react";
+import { 
+  UserPlus, Share2, Copy, CheckCircle2, AlertCircle, Send, 
+  ArrowLeft, ArrowRight, User, MapPin, Briefcase, CreditCard, 
+  IndianRupee, Phone, Mail, Calendar, Building, Home, FileText
+} from "lucide-react";
 import { toast } from "sonner";
 import { partnerProfile } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import StepIndicator from "@/components/StepIndicator";
+import FormCard from "@/components/FormCard";
+import FormInput from "@/components/FormInput";
+import FormSelect from "@/components/FormSelect";
+import FileUploadZone from "@/components/FileUploadZone";
+import { fetchCreditReport, updateCreditReport } from "@/api/api";
 
 type Mode = "assisted" | "share";
 
+const steps = [
+  { id: 1, title: "Personal Details" },
+  { id: 2, title: "Employment & Credit" },
+  { id: 3, title: "Loan & Documents" },
+  { id: 4, title: "Review & Submit" },
+];
+
+const loanTypes = [
+  { value: "personal", label: "Personal Loan" },
+  { value: "home", label: "Home Loan" },
+  { value: "education", label: "Education Loan" },
+  { value: "vehicle", label: "Vehicle Loan" },
+  { value: "business", label: "Business Loan" },
+];
+
+const employmentStatuses = [
+  { value: "salaried", label: "Salaried" },
+  { value: "self-employed", label: "Self Employed" },
+  { value: "business", label: "Business Owner" },
+  { value: "retired", label: "Retired" },
+];
+
+const residentialStatuses = [
+  { value: "owned", label: "Owned" },
+  { value: "rented", label: "Rented" },
+  { value: "family", label: "Living with Family" },
+];
+
 const LeadSubmit = () => {
   const [mode, setMode] = useState<Mode>("assisted");
-  const [step, setStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [emailOptions, setEmailOptions] = useState<string[]>([]);
 
-  const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [income, setIncome] = useState("");
-  const [pincode, setPincode] = useState("");
-  const [employment, setEmployment] = useState("salaried");
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    middleName: "",
+    dateOfBirth: "",
+    panCard: "",
+    email: "",
+    aadhaarCard: "",
+    mobileNumber: "",
+    uanNumber: "",
+    employmentExperience: "",
+    employmentStatus: "",
+    companyName: "",
+    monthlyIncome: "",
+    residentialStatus: "",
+    addressLine1: "",
+    state: "",
+    pincode: "",
+    loanType: "",
+    loanAmount: "",
+    cibilScore: "",
+    recentEnquiries: "",
+    settlements: "",
+    emiBounces: "",
+    creditCardUtilization: "",
+    residentialStability: "",
+    existingEmi: "",
+    loanTenure: "",
+    employmentCategory: "",
+    salaryMode: "",
+  });
 
-  const handleSubmit = () => {
-    if (!name || !mobile) {
-      toast.error("Name and mobile are required");
+  const [documents, setDocuments] = useState({
+    itr: null,
+    photo: null,
+    payslip1: null,
+    payslip2: null,
+    payslip3: null,
+  });
+
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+
+  const updateFormData = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateStep = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (currentStep === 0) {
+      if (!formData.firstName) newErrors.firstName = "First name is required";
+      if (!formData.lastName) newErrors.lastName = "Last name is required";
+      if (!formData.dateOfBirth) newErrors.dateOfBirth = "DOB is required";
+      if (!formData.email) newErrors.email = "Email is required";
+      if (!formData.addressLine1) newErrors.addressLine1 = "Address is required";
+      if (!formData.state) newErrors.state = "State is required";
+      if (!formData.pincode) newErrors.pincode = "Pincode is required";
+      if (!formData.mobileNumber) newErrors.mobileNumber = "Mobile number is required";
+    }
+
+    if (currentStep === 1) {
+      if (!formData.employmentStatus) newErrors.employmentStatus = "Employment Status is Required";
+      if (!formData.companyName) newErrors.companyName = "Company Name is Required";
+      if (!formData.monthlyIncome) newErrors.monthlyIncome = "Monthly Income is Required";
+      if (!formData.cibilScore) newErrors.cibilScore = "CIBIL Score is Required";
+    }
+
+    if (currentStep === 2) {
+      if (!formData.loanType) newErrors.loanType = "Loan Type is Required";
+      if (!formData.loanAmount) newErrors.loanAmount = "Loan Amount is Required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = async () => {
+    if (!validateStep()) {
+      toast.error("Please fill all required fields");
       return;
     }
-    if (step === 0) {
-      if (mobile === "9999999999") {
-        toast.error("Customer already has an active application.");
-        return;
+
+    setIsLoading(true);
+    try {
+      if (currentStep === 0) {
+        await updateCreditReport(formData);
+        setCurrentStep(1);
+      } else if (currentStep === 1) {
+        await updateCreditReport(formData);
+        setCurrentStep(2);
+      } else if (currentStep === 2) {
+        setCurrentStep(3);
+      } else if (currentStep === 3) {
+        if (!termsAccepted || !privacyAccepted) {
+          toast.error("Please accept Terms & Privacy Policy");
+          return;
+        }
+        setSubmitted(true);
+        toast.success("Lead submitted successfully! 🎉");
       }
-      setStep(1);
-      return;
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    setSubmitted(true);
-    toast.success("Lead submitted successfully! 🎉");
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
   const resetForm = () => {
-    setName(""); setMobile(""); setIncome(""); setPincode(""); setEmployment("salaried");
-    setStep(0); setSubmitted(false);
+    setCurrentStep(0);
+    setSubmitted(false);
+    setFormData({
+      firstName: "", lastName: "", middleName: "", dateOfBirth: "", panCard: "",
+      email: "", aadhaarCard: "", mobileNumber: "", uanNumber: "", employmentExperience: "",
+      employmentStatus: "", companyName: "", monthlyIncome: "", residentialStatus: "",
+      addressLine1: "", state: "", pincode: "", loanType: "", loanAmount: "",
+      cibilScore: "", recentEnquiries: "", settlements: "", emiBounces: "",
+      creditCardUtilization: "", residentialStability: "", existingEmi: "",
+      loanTenure: "", employmentCategory: "", salaryMode: "",
+    });
   };
 
-  const inputClass = "w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all";
+  const autoFillUserDetails = useCallback(async () => {
+    if (!formData.mobileNumber || formData.mobileNumber.length < 10) return;
+    
+    setIsLoading(true);
+    try {
+      const resp = await fetchCreditReport({ mobileNumber: formData.mobileNumber });
+      const apiData = resp.data.data;
+      
+      const emails = apiData.emails.map((e: any) => e.email);
+      setEmailOptions(emails);
+
+      setFormData(prev => ({
+        ...prev,
+        firstName: apiData.firstName,
+        lastName: apiData.lastName,
+        middleName: apiData.middleName,
+        dateOfBirth: apiData.dateOfBirth.split("T")[0],
+        panCard: apiData.panCard,
+        email: emails[0] || "",
+        uanNumber: apiData.uanNumber,
+        employmentStatus: apiData.employmentStatus,
+        companyName: apiData.companyName,
+        monthlyIncome: apiData.monthlyIncome.toString(),
+        addressLine1: apiData.addresses[0]?.streetAddress || "",
+        state: apiData.addresses[0]?.state || "",
+        pincode: apiData.addresses[0]?.pincode || "",
+        cibilScore: apiData.cibilScore.toString(),
+        recentEnquiries: apiData.last6MonthsEnquiryCount.toString(),
+        settlements: apiData.settlements.toString(),
+        emiBounces: apiData.emiBounces.toString(),
+        creditCardUtilization: apiData.creaditCardUtilization.toString(),
+        existingEmi: apiData.existingEmi.toString(),
+        loanTenure: apiData.loanTenure.toString(),
+        salaryMode: apiData.salaryMode,
+        employmentCategory: apiData.employmentCategory,
+      }));
+      toast.success("Details auto-filled from credit report!");
+    } catch (error) {
+      console.error("Auto-fill failed", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [formData.mobileNumber]);
+
+  const SummarySection = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
+    <div className="bg-card rounded-xl border border-border/50 overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-r from-primary/10 to-accent/30 px-5 py-3 border-b border-border/50">
+        <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+          <Icon className="w-4 h-4 text-primary" />
+          {title}
+        </h3>
+      </div>
+      <div className="p-5 space-y-2">{children}</div>
+    </div>
+  );
+
+  const SummaryRow = ({ label, value, icon: Icon, highlighted }: { label: string, value: string, icon?: any, highlighted?: boolean }) => (
+    <div className="flex justify-between items-start gap-4 py-1.5 border-b border-border/30 last:border-0">
+      <span className="text-muted-foreground text-xs flex items-center gap-2">
+        {Icon && <Icon className="w-3.5 h-3.5 text-primary/60" />}
+        {label}
+      </span>
+      <span className={cn(
+        "text-xs font-medium text-right",
+        highlighted ? "text-primary font-semibold" : "text-foreground"
+      )}>
+        {value || "—"}
+      </span>
+    </div>
+  );
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Mode Toggle */}
       <div className="flex rounded-xl bg-secondary p-1.5 gap-1">
         {(["assisted", "share"] as Mode[]).map((m) => (
@@ -76,18 +293,12 @@ const LeadSubmit = () => {
                 {partnerProfile.referralLink}
               </div>
               <div className="flex gap-3">
-                <button
-                  onClick={() => { navigator.clipboard.writeText(partnerProfile.referralLink); toast.success("Copied!"); }}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-secondary py-3.5 text-sm font-semibold text-foreground hover:bg-secondary/80 active:scale-[0.98] transition-all"
-                >
-                  <Copy className="h-4 w-4" /> Copy Link
-                </button>
-                <button
-                  onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Apply for a personal loan here: ${partnerProfile.referralLink}`)}`, "_blank")}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl purple-gradient py-3.5 text-sm font-semibold text-primary-foreground hover:opacity-90 active:scale-[0.98] transition-all"
-                >
-                  <Share2 className="h-4 w-4" /> WhatsApp
-                </button>
+                <Button variant="secondary" className="flex-1 h-12" onClick={() => { navigator.clipboard.writeText(partnerProfile.referralLink); toast.success("Copied!"); }}>
+                  <Copy className="h-4 w-4 mr-2" /> Copy Link
+                </Button>
+                <Button className="flex-1 h-12 gold-gradient" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Apply for a personal loan here: ${partnerProfile.referralLink}`)}`, "_blank")}>
+                  <Share2 className="h-4 w-4 mr-2" /> WhatsApp
+                </Button>
               </div>
             </div>
           </motion.div>
@@ -100,76 +311,103 @@ const LeadSubmit = () => {
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Lead Submitted!</h3>
                 <p className="text-sm text-muted-foreground">SMS link sent to customer. You'll be notified on each stage.</p>
-                <button onClick={resetForm} className="gold-gradient rounded-xl px-8 py-3 text-sm font-bold text-primary-foreground active:scale-[0.98] transition-transform">
+                <Button onClick={resetForm} className="gold-gradient h-12 px-8">
                   Submit Another Lead
-                </button>
+                </Button>
               </motion.div>
             ) : (
-              <div className="card-elevated rounded-xl p-6 space-y-5">
-                {/* Step Indicator */}
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className={cn("flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold", step >= 0 ? "gold-gradient text-primary-foreground" : "bg-secondary text-muted-foreground")}>1</div>
-                    <span className={cn("text-xs font-medium", step === 0 ? "text-foreground" : "text-muted-foreground")}>Customer Info</span>
-                  </div>
-                  <div className={cn("h-px flex-1", step >= 1 ? "gold-gradient" : "bg-border")} />
-                  <div className="flex items-center gap-2">
-                    <div className={cn("flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold", step >= 1 ? "gold-gradient text-primary-foreground" : "bg-secondary text-muted-foreground")}>2</div>
-                    <span className={cn("text-xs font-medium", step === 1 ? "text-foreground" : "text-muted-foreground")}>Eligibility</span>
-                  </div>
-                </div>
+              <div className="space-y-6">
+                <StepIndicator steps={steps} currentStep={currentStep + 1} />
 
-                {step === 0 ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">Customer Name</label>
-                      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter full name" className={inputClass} />
+                {currentStep === 0 && (
+                  <FormCard title="Personal Details" subtitle="Enter customer's basic information.">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <FormInput label="Mobile Number" value={formData.mobileNumber} onChange={(v) => updateFormData("mobileNumber", v)} required error={errors.mobileNumber} onBlur={autoFillUserDetails} />
+                      <FormInput label="First Name" value={formData.firstName} onChange={(v) => updateFormData("firstName", v)} required error={errors.firstName} />
+                      <FormInput label="Middle Name" value={formData.middleName} onChange={(v) => updateFormData("middleName", v)} />
+                      <FormInput label="Last Name" value={formData.lastName} onChange={(v) => updateFormData("lastName", v)} required error={errors.lastName} />
+                      <FormInput label="Date of Birth" value={formData.dateOfBirth} onChange={(v) => updateFormData("dateOfBirth", v)} type="date" required error={errors.dateOfBirth} />
+                      <FormInput label="PAN Card" value={formData.panCard} onChange={(v) => updateFormData("panCard", v)} />
+                      {emailOptions.length > 1 ? (
+                        <FormSelect label="Email" value={formData.email} onChange={(v) => updateFormData("email", v)} options={emailOptions.map(e => ({ value: e, label: e }))} required error={errors.email} />
+                      ) : (
+                        <FormInput label="Email" value={formData.email} onChange={(v) => updateFormData("email", v)} required error={errors.email} />
+                      )}
+                      <FormInput label="Address Line 1" value={formData.addressLine1} onChange={(v) => updateFormData("addressLine1", v)} required error={errors.addressLine1} />
+                      <FormInput label="State" value={formData.state} onChange={(v) => updateFormData("state", v)} required error={errors.state} />
+                      <FormInput label="Pincode" value={formData.pincode} onChange={(v) => updateFormData("pincode", v)} required error={errors.pincode} />
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">Mobile Number</label>
-                      <input value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="10-digit mobile" maxLength={10} className={inputClass} />
+                  </FormCard>
+                )}
+
+                {currentStep === 1 && (
+                  <FormCard title="Employment & Credit" subtitle="Review employment and credit details.">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <FormSelect label="Employment Status" value={formData.employmentStatus} onChange={(v) => updateFormData("employmentStatus", v)} options={employmentStatuses} required error={errors.employmentStatus} />
+                      <FormInput label="Company Name" value={formData.companyName} onChange={(v) => updateFormData("companyName", v)} required error={errors.companyName} />
+                      <FormInput label="Monthly Income (₹)" value={formData.monthlyIncome} onChange={(v) => updateFormData("monthlyIncome", v)} type="number" required error={errors.monthlyIncome} />
+                      <FormInput label="CIBIL Score" value={formData.cibilScore} onChange={(v) => updateFormData("cibilScore", v)} required error={errors.cibilScore} />
+                      <FormInput label="UAN / PF Number" value={formData.uanNumber} onChange={(v) => updateFormData("uanNumber", v)} />
+                      <FormInput label="Existing EMI (₹)" value={formData.existingEmi} onChange={(v) => updateFormData("existingEmi", v)} type="number" />
                     </div>
-                    <div className="col-span-2 flex items-start gap-2 rounded-xl bg-status-review/10 p-4">
-                      <AlertCircle className="h-4 w-4 text-status-review mt-0.5 shrink-0" />
-                      <p className="text-xs text-muted-foreground">System will check for duplicate leads before proceeding. Try <code className="text-foreground">9999999999</code> to see the error.</p>
+                  </FormCard>
+                )}
+
+                {currentStep === 2 && (
+                  <FormCard title="Loan & Documents" subtitle="Select loan type and upload documents.">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                      <FormSelect label="Loan Type" value={formData.loanType} onChange={(v) => updateFormData("loanType", v)} options={loanTypes} required error={errors.loanType} />
+                      <FormInput label="Loan Amount (₹)" value={formData.loanAmount} onChange={(v) => updateFormData("loanAmount", v)} type="number" required error={errors.loanAmount} />
                     </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">Monthly Income (₹)</label>
-                      <input value={income} onChange={(e) => setIncome(e.target.value)} placeholder="e.g. 45000" type="number" className={inputClass} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <FileUploadZone label="Applicant Photo" onFileSelect={(f) => setDocuments(d => ({ ...d, photo: f }))} required />
+                      <FileUploadZone label="Last 3 Months Payslips" onFileSelect={(f) => setDocuments(d => ({ ...d, payslip1: f }))} required />
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">Pincode</label>
-                      <input value={pincode} onChange={(e) => setPincode(e.target.value)} placeholder="e.g. 400001" maxLength={6} className={inputClass} />
+                  </FormCard>
+                )}
+
+                {currentStep === 3 && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <SummarySection title="Personal Details" icon={User}>
+                        <SummaryRow label="Full Name" value={`${formData.firstName} ${formData.middleName} ${formData.lastName}`} icon={User} />
+                        <SummaryRow label="Mobile" value={formData.mobileNumber} icon={Phone} />
+                        <SummaryRow label="Email" value={formData.email} icon={Mail} />
+                        <SummaryRow label="PAN" value={formData.panCard} icon={CreditCard} highlighted />
+                      </SummarySection>
+                      <SummarySection title="Employment" icon={Briefcase}>
+                        <SummaryRow label="Status" value={formData.employmentStatus} icon={Briefcase} />
+                        <SummaryRow label="Company" value={formData.companyName} icon={Building} />
+                        <SummaryRow label="Income" value={`₹${formData.monthlyIncome}`} icon={IndianRupee} highlighted />
+                      </SummarySection>
                     </div>
-                    <div className="col-span-2">
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">Employment Type</label>
-                      <div className="flex gap-3">
-                        {["salaried", "self-employed"].map((type) => (
-                          <button key={type} onClick={() => setEmployment(type)} className={cn(
-                            "flex-1 rounded-xl border py-3 text-sm font-semibold capitalize transition-all",
-                            employment === type ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-muted-foreground"
-                          )}>
-                            {type}
-                          </button>
-                        ))}
+
+                    <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm space-y-4">
+                      <h3 className="text-base font-semibold text-foreground">Terms & Consent</h3>
+                      <div className="flex items-start space-x-3 p-3 rounded-md border border-border">
+                        <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(c) => setTermsAccepted(!!c)} />
+                        <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                          I hereby declare that all the information provided is true and accurate.
+                        </label>
+                      </div>
+                      <div className="flex items-start space-x-3 p-3 rounded-md border border-border">
+                        <Checkbox id="privacy" checked={privacyAccepted} onCheckedChange={(c) => setPrivacyAccepted(!!c)} />
+                        <label htmlFor="privacy" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                          I agree to the Terms of Service and Privacy Policy.
+                        </label>
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div className="flex gap-3 pt-2">
-                  {step === 1 && (
-                    <button onClick={() => setStep(0)} className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all">
-                      ← Back
-                    </button>
-                  )}
-                  <button onClick={handleSubmit} className="flex-1 flex items-center justify-center gap-2 gold-gradient rounded-xl py-3 text-sm font-bold text-primary-foreground shadow-lg active:scale-[0.98] transition-transform">
-                    <Send className="h-4 w-4" />
-                    {step === 0 ? "Check & Continue" : "Submit Lead"}
-                  </button>
+                <div className="flex justify-between items-center pt-4">
+                  <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || isLoading} className="h-12 px-6">
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Back
+                  </Button>
+                  <Button onClick={handleNext} disabled={isLoading} className="h-12 px-8 gold-gradient">
+                    {isLoading ? "Processing..." : currentStep === 3 ? "Submit Application" : "Next"}
+                    {!isLoading && currentStep < 3 && <ArrowRight className="w-4 h-4 ml-2" />}
+                  </Button>
                 </div>
               </div>
             )}
