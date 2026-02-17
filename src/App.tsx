@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import LeadSubmit from "./pages/LeadSubmit";
 import Leads from "./pages/Leads";
 import WalletPage from "./pages/WalletPage";
+import CompareLoan from "./pages/CompareLoan";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/leads" element={<Leads />} />
             <Route path="/wallet" element={<WalletPage />} />
           </Route>
+          <Route path="/compare-loan" element={<CompareLoan />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

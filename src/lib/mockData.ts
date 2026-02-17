@@ -29,6 +29,19 @@ export interface Lead {
   commission?: number;
 }
 
+export interface LoanOffer {
+  id: string;
+  bankName: string;
+  bankLogo: string;
+  interestRate: number;
+  processingFee: string;
+  tenure: string;
+  monthlyEmi: number;
+  totalRepayment: number;
+  rating: number;
+  features: string[];
+}
+
 export const STATUS_MAP: Record<LeadStatus, { label: string; description: string; colorKey: string }> = {
   LEAD_INITIATED: { label: "Draft / Link Sent", description: "Customer clicked but hasn't finished. Call them.", colorKey: "status-draft" },
   DOC_VERIFICATION: { label: "Docs Pending", description: "Application started. Waiting for uploads.", colorKey: "status-pending" },
@@ -46,6 +59,57 @@ export const mockLeads: Lead[] = [
   { id: "LD-1046", customerName: "Vikram Singh", mobile: "90012*****", loanAmount: 400000, loanProduct: "vehicle_loan", status: "LEAD_INITIATED", createdAt: "2026-02-15", updatedAt: "2026-02-15" },
   { id: "LD-1047", customerName: "Deepa Nair", mobile: "98001*****", loanAmount: 600000, loanProduct: "personal_loan", status: "REJECTED_RISK", createdAt: "2026-02-08", updatedAt: "2026-02-11", rejectionReason: "FOIR > 60%" },
   { id: "LD-1048", customerName: "Suresh Gupta", mobile: "97654*****", loanAmount: 350000, loanProduct: "business_loan", status: "DISBURSED", createdAt: "2026-02-05", updatedAt: "2026-02-09", commission: 3500 },
+];
+
+export const mockLoanOffers: LoanOffer[] = [
+  {
+    id: "OFF-001",
+    bankName: "HDFC Bank",
+    bankLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/HDFC_Bank_Logo.svg/2560px-HDFC_Bank_Logo.svg.png",
+    interestRate: 10.5,
+    processingFee: "₹2,500 + GST",
+    tenure: "60 Months",
+    monthlyEmi: 10747,
+    totalRepayment: 644820,
+    rating: 4.8,
+    features: ["Instant Approval", "No Prepayment Charges", "Digital Process"]
+  },
+  {
+    id: "OFF-002",
+    bankName: "ICICI Bank",
+    bankLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/ICICI_Bank_Logo.svg/2560px-ICICI_Bank_Logo.svg.png",
+    interestRate: 10.75,
+    processingFee: "1% of Loan Amount",
+    tenure: "60 Months",
+    monthlyEmi: 10808,
+    totalRepayment: 648480,
+    rating: 4.6,
+    features: ["Flexible Tenure", "Minimal Documentation", "Top-up Facility"]
+  },
+  {
+    id: "OFF-003",
+    bankName: "Axis Bank",
+    bankLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Axis_Bank_logo.svg/2560px-Axis_Bank_logo.svg.png",
+    interestRate: 11.0,
+    processingFee: "₹1,999 Fixed",
+    tenure: "60 Months",
+    monthlyEmi: 10871,
+    totalRepayment: 652260,
+    rating: 4.5,
+    features: ["Special Rates for Women", "Quick Disbursal", "Online Tracking"]
+  },
+  {
+    id: "OFF-004",
+    bankName: "SBI",
+    bankLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/SBI-Logo.svg/2560px-SBI-Logo.svg.png",
+    interestRate: 9.9,
+    processingFee: "Nil",
+    tenure: "60 Months",
+    monthlyEmi: 10598,
+    totalRepayment: 635880,
+    rating: 4.7,
+    features: ["Lowest Interest Rate", "Government Trust", "Wide Branch Network"]
+  }
 ];
 
 export const partnerProfile = {
