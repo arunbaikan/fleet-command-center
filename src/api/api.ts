@@ -17,3 +17,11 @@ export const personalDetailsVerification = async (data: any) => {
 export const submitFinancialProfileDetails = async (data: any) => {
   return axios.post(`${API_BASE_URL}/customer/financial-profile`, data);
 };
+
+export const sendOtpToMobile = async (data: { mobileNumber: string }) => {
+  return axios.post(`${API_BASE_URL}/auth/send-otp`, data);
+};
+
+export const verifyOtpApi = async (data: { mobileNumber: string, otp: string }) => {
+  return axios.post(`${API_BASE_URL}/auth/verify-otp`, data);
+};
