@@ -34,8 +34,7 @@ import {
   verifyOtpApi,
 } from "@/api/api";
 import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "sonner";
 import axios from "axios";
 import Loader from "@/components/Loader";
 
@@ -410,8 +409,10 @@ const LoanApplication = () => {
       await sendOtpToMobile({ mobileNumber: tempMobile });
       setIsOtpSent(true);
       toast.success("OTP sent successfully");
-    } catch (error) {
-      toast.error("Failed to send OTP");
+    } catch (error: any) {
+      console.error("OTP Error:", error);
+      const message = error.response?.data?.message || "Failed to send OTP. Please check your connection.";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -429,8 +430,10 @@ const LoanApplication = () => {
       setNeedsMobile(false);
       autoFillUserDetails();
       toast.success("OTP verified successfully");
-    } catch (error) {
-      toast.error("Invalid OTP");
+    } catch (error: any) {
+      console.error("Verify Error:", error);
+      const message = error.response?.data?.message || "Invalid OTP. Please try again.";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -471,7 +474,6 @@ const LoanApplication = () => {
   if (needsMobile) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/20 px-4">
-        <ToastContainer position="top-right" autoClose={3000} />
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -551,7 +553,6 @@ const LoanApplication = () => {
 
   return (
     <div className="flex min-h-screen justify-center bg-gradient-to-br from-background via-background to-accent/20">
-      <ToastContainer position="top-right" autoClose={3000} />
       <div className="px-4 py-8 md:py-12 max-w-7xl w-full">
         <div className="justify-center text-center mb-8">
           <h1 className="text-4xl md:text-3xl font-bold text-foreground mb-4">
