@@ -13,7 +13,7 @@ const WalletPage = () => {
   useEffect(() => {
     if (totalCommission > 0 && !hasConfettied) {
       setHasConfettied(true);
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.3 }, colors: ["#d4a017", "#f5c842", "#16a34a"] });
+      confetti({ particleCount: 80, spread: 70, origin: { y: 0.3 }, colors: ["#7c3aed", "#a855f7", "#c084fc"] });
     }
   }, [totalCommission, hasConfettied]);
 
@@ -64,7 +64,7 @@ const WalletPage = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
             <p className="text-xs text-muted-foreground uppercase tracking-wider">This Month</p>
           </div>
-          <p className="text-3xl font-bold text-accent">₹{totalCommission.toLocaleString("en-IN")}</p>
+          <p className="text-3xl font-bold text-primary">₹{totalCommission.toLocaleString("en-IN")}</p>
           <p className="text-xs text-muted-foreground mt-1">{disbursedLeads.length} disbursements</p>
         </motion.div>
       </div>
@@ -104,7 +104,7 @@ const WalletPage = () => {
                 <span className="text-sm font-medium text-foreground">{lead.customerName}</span>
                 <span className="text-sm text-foreground">₹{lead.loanAmount.toLocaleString("en-IN")}</span>
                 <span className="text-sm text-muted-foreground">{lead.updatedAt}</span>
-                <span className="text-sm font-bold text-accent md:text-right">+₹{(lead.commission || 0).toLocaleString("en-IN")}</span>
+                <span className="text-sm font-bold text-primary md:text-right">+₹{(lead.commission || 0).toLocaleString("en-IN")}</span>
               </motion.div>
             ))
           )}

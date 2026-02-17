@@ -65,8 +65,8 @@ const LeadSubmit = () => {
         {mode === "share" ? (
           <motion.div key="share" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <div className="card-elevated rounded-xl p-8 text-center space-y-5">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-emerald/10">
-                <Share2 className="h-9 w-9 text-accent" />
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
+                <Share2 className="h-9 w-9 text-primary" />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-foreground">Share Your Magic Link</h3>
@@ -84,7 +84,7 @@ const LeadSubmit = () => {
                 </button>
                 <button
                   onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Apply for a personal loan here: ${partnerProfile.referralLink}`)}`, "_blank")}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald py-3.5 text-sm font-semibold text-accent-foreground hover:opacity-90 active:scale-[0.98] transition-all"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl purple-gradient py-3.5 text-sm font-semibold text-primary-foreground hover:opacity-90 active:scale-[0.98] transition-all"
                 >
                   <Share2 className="h-4 w-4" /> WhatsApp
                 </button>
@@ -95,8 +95,8 @@ const LeadSubmit = () => {
           <motion.div key="assisted" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
             {submitted ? (
               <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="card-elevated rounded-xl p-10 text-center space-y-4">
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-emerald/10 emerald-glow">
-                  <CheckCircle2 className="h-10 w-10 text-accent" />
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 violet-glow">
+                  <CheckCircle2 className="h-10 w-10 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Lead Submitted!</h3>
                 <p className="text-sm text-muted-foreground">SMS link sent to customer. You'll be notified on each stage.</p>
