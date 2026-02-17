@@ -189,8 +189,8 @@ const LoanApplication = () => {
       if (isEmpty(formData.emiBounces)) newErrors.emiBounces = "EMI Bounces is required";
       if (!formData.creditCardUtilization && formData.creditCardUtilization !== 0)
         newErrors.creditCardUtilization = "Credit Card Utilization is required";
-      if (!formData.residentialStability && formData.residentialStability !== 0)
-        newErrors.residentialStability = "Residential Stability is required";
+      // if (!formData.residentialStability && formData.residentialStability !== 0)
+      //   newErrors.residentialStability = "Residential Stability is required";
       if (!formData.existingEmi && formData.existingEmi !== 0)
         newErrors.existingEmi = "Existing EMI is required";
       if (!formData.settlements && formData.settlements !== 0)
@@ -304,7 +304,7 @@ const LoanApplication = () => {
       });
     }
   };
-
+  console.log("Form Data:", formData);
   const mapApiResponseToFormData = useCallback((apiData: any, mobile: string) => {
     const primaryEmail = apiData.emails?.[0]?.email || "";
     const addresses = Array.isArray(apiData?.addresses) ? apiData?.addresses : [];
@@ -387,9 +387,12 @@ const LoanApplication = () => {
     }
     setIsLoading(true);
     try {
-      await sendOtpToMobile({ mobileNumber: tempMobile });
+      const resp = await sendOtpToMobile({ mobileNumber: tempMobile });
+      console.log("resp", resp);
+      toast.success(
+        `${resp?.data?.otp} OTP sent successfully to ${tempMobile}`,
+      );
       setIsOtpSent(true);
-      toast.success("OTP sent successfully");
     } catch (error: any) {
       console.error("OTP Error:", error);
       const message = error.response?.data?.message || "Failed to send OTP. Please check your connection.";
@@ -658,7 +661,7 @@ const LoanApplication = () => {
                   <FormInput label="Settlements" value={formData.settlements} onChange={(v) => updateFormData("settlements", v)} required error={errors.settlements} />
                   <FormInput label="EMI Bounces" value={formData.emiBounces} onChange={(v) => updateFormData("emiBounces", v)} required error={errors.emiBounces} />
                   <FormInput label="Credit Card Utilization (%)" value={formData.creditCardUtilization} onChange={(v) => updateFormData("creditCardUtilization", v)} required error={errors.creditCardUtilization} />
-                  <FormSelect label="Residential Stability" value={formData.residentialStability} onChange={(v) => updateFormData("residentialStability", v)} required options={[{ value: "1", label: "Less than 1 year" }, { value: "3", label: "1-3 years" }, { value: "5", label: "3-5 years" }, { value: "10", label: "More than 5 years" }]} error={errors.residentialStability} />
+                  {/* <FormSelect label="Residential Stability" value={formData.residentialStability} onChange={(v) => updateFormData("residentialStability", v)} required options={[{ value: "1", label: "Less than 1 year" }, { value: "3", label: "1-3 years" }, { value: "5", label: "3-5 years" }, { value: "10", label: "More than 5 years" }]} error={errors.residentialStability} /> */}
                   <FormInput label="Existing EMI (₹)" value={formData.existingEmi} onChange={(v) => updateFormData("existingEmi", v)} type="number" required error={errors.existingEmi} />
                 </div>
               </div>
@@ -750,7 +753,7 @@ const LoanApplication = () => {
           )}
         </div>
 
-        <div className="mt-8 flex justify-between items-center">
+        {/* <div className="mt-8 flex justify-between items-center">
           <Button variant="outline" onClick={handleBack} disabled={currentStep === 0} className="h-12 px-6">
             <ArrowLeft className="w-4 h-4 mr-2" /> Back
           </Button>
@@ -767,6 +770,40 @@ const LoanApplication = () => {
                 <Send className="w-4 h-4 mr-2" /> Submit Application
               </Button>
             </div>
+          )}
+        </div> */}
+        <div className="mt-8 flex justify-between items-center">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={currentStep === 0}
+            className="h-12 px-6"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back
+          </Button>
+
+          {currentStep < 3 && (
+            <Button onClick={handleNext} disabled={isLoading} className="h-12 px-8">
+              {isLoading ? (
+                <Loader size={20} />
+              ) : (
+                <>
+                  <span className="mr-2">Next</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          )}
+
+          {currentStep === 3 && (
+            <Button
+              onClick={handleSubmit}
+              disabled={!termsAccepted || !privacyAccepted}
+              className="h-12 px-8"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Submit Application
+            </Button>
           )}
         </div>
       </div>

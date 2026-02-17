@@ -22,7 +22,7 @@ const App = () => (
         <Routes>
           <Route element={<FleetLayout />}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/submit" element={<LeadSubmit />} />
+            <Route path="/loan-application" element={<LeadSubmit />} />
             <Route path="/leads" element={<Leads />} />
             <Route path="/wallet" element={<WalletPage />} />
           </Route>

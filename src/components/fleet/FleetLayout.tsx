@@ -6,7 +6,7 @@ import { useState } from "react";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/submit", icon: UserPlus, label: "New Lead" },
+  { to: "/loan-application", icon: UserPlus, label: "New Lead" },
   { to: "/leads", icon: List, label: "Lead Tracker" },
   { to: "/wallet", icon: Wallet, label: "Wallet & Payouts" },
 ];
@@ -46,7 +46,7 @@ const FleetLayout = () => {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => {
+          {/* {navItems.map((item) => {
             const isActive = location.pathname === item.to;
             return (
               <NavLink
@@ -65,7 +65,41 @@ const FleetLayout = () => {
                 {isActive && <ChevronRight className="ml-auto h-4 w-4 opacity-50" />}
               </NavLink>
             );
-          })}
+          })} */}
+          {navItems.map((item) => {
+  const isActive = location.pathname === item.to;
+
+  const handleClick = () => {
+    if (item.to === "/loan-application") {
+      sessionStorage.removeItem("mobile_number");
+    }
+    setSidebarOpen(false);
+  };
+
+  return (
+    <NavLink
+      key={item.to}
+      to={item.to}
+      onClick={handleClick}
+      className={cn(
+        "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+        isActive
+          ? "bg-primary/10 text-primary"
+          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+      )}
+    >
+      <item.icon
+        className={cn(
+          "h-[18px] w-[18px]",
+          isActive && "drop-shadow-[0_0_8px_hsl(42_92%_56%/0.4)]"
+        )}
+      />
+      {item.label}
+      {isActive && <ChevronRight className="ml-auto h-4 w-4 opacity-50" />}
+    </NavLink>
+  );
+})}
+
         </nav>
 
         {/* Footer */}
