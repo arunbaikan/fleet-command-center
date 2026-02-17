@@ -1,29 +1,40 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserPlus, Share2, Copy, CheckCircle2, AlertCircle, Send } from "lucide-react";
+import { UserPlus, Share2, Copy, CheckCircle2, AlertCircle, Send, User, Briefcase, Home, Coins, Car } from "lucide-react";
 import { toast } from "sonner";
-import { partnerProfile } from "@/lib/mockData";
+import { partnerProfile, LOAN_PRODUCTS, LoanProduct } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 
 type Mode = "assisted" | "share";
+
+const PRODUCT_ICONS: Record<LoanProduct, any> = {
+  personal_loan: User,
+  business_loan: Briefcase,
+  home_loan: Home,
+  gold_loan: Coins,
+  vehicle_loan: Car,
+};
 
 const LeadSubmit = () => {
   const [mode, setMode] = useState<Mode>("assisted");
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
 
+  // Form State
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
+  const [product, setProduct] = useState<LoanProduct>("personal_loan");
+  const [amount, setAmount] = useState("");
   const [income, setIncome] = useState("");
   const [pincode, setPincode] = useState("");
   const [employment, setEmployment] = useState("salaried");
 
   const handleSubmit = () => {
-    if (!name || !mobile) {
-      toast.error("Name and mobile are required");
-      return;
-    }
     if (step === 0) {
+      if (!name || !mobile) {
+        toast.error("Name and mobile are required");
+        return;
+      }
       if (mobile === "9999999999") {
         toast.error("Customer already has an active application.");
         return;
@@ -31,12 +42,29 @@ const LeadSubmit = () => {
       setStep(1);
       return;
     }
-    setSubmitted(true);
-    toast.success("Lead submitted successfully! 🎉");
+    
+    if (step === 1) {
+      if (!amount) {
+        toast.error("Please enter the loan amount");
+        return;
+      }
+      setStep(2);
+      return;
+    }
+
+    if (step === 2) {
+      if (!income || !pincode) {
+        toast.error("Income and pincode are required");
+        return;
+      }
+      setSubmitted(true);
+      toast.success("Lead submitted successfully! 🎉");
+    }
   };
 
   const resetForm = () => {
-    setName(""); setMobile(""); setIncome(""); setPincode(""); setEmployment("salaried");
+    setName(""); setMobile(""); setAmount(""); setIncome(""); setPincode(""); 
+    setProduct("personal_loan"); setEmployment("salaried");
     setStep(0); setSubmitted(false);
   };
 
@@ -110,65 +138,112 @@ const LeadSubmit = () => {
                 <div className="flex items-center gap-3 mb-2">
                   <div className="flex items-center gap-2">
                     <div className={cn("flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold", step >= 0 ? "gold-gradient text-primary-foreground" : "bg-secondary text-muted-foreground")}>1</div>
-                    <span className={cn("text-xs font-medium", step === 0 ? "text-foreground" : "text-muted-foreground")}>Customer Info</span>
+                    <span className={cn("text-xs font-medium", step === 0 ? "text-foreground" : "text-muted-foreground")}>Info</span>
                   </div>
                   <div className={cn("h-px flex-1", step >= 1 ? "gold-gradient" : "bg-border")} />
                   <div className="flex items-center gap-2">
                     <div className={cn("flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold", step >= 1 ? "gold-gradient text-primary-foreground" : "bg-secondary text-muted-foreground")}>2</div>
-                    <span className={cn("text-xs font-medium", step === 1 ? "text-foreground" : "text-muted-foreground")}>Eligibility</span>
+                    <span className={cn("text-xs font-medium", step === 1 ? "text-foreground" : "text-muted-foreground")}>Loan</span>
+                  </div>
+                  <div className={cn("h-px flex-1", step >= 2 ? "gold-gradient" : "bg-border")} />
+                  <div className="flex items-center gap-2">
+                    <div className={cn("flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold", step >= 2 ? "gold-gradient text-primary-foreground" : "bg-secondary text-muted-foreground")}>3</div>
+                    <span className={cn("text-xs font-medium", step === 2 ? "text-foreground" : "text-muted-foreground")}>Eligibility</span>
                   </div>
                 </div>
 
-                {step === 0 ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">Customer Name</label>
-                      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter full name" className={inputClass} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">Mobile Number</label>
-                      <input value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="10-digit mobile" maxLength={10} className={inputClass} />
-                    </div>
-                    <div className="col-span-2 flex items-start gap-2 rounded-xl bg-status-review/10 p-4">
-                      <AlertCircle className="h-4 w-4 text-status-review mt-0.5 shrink-0" />
-                      <p className="text-xs text-muted-foreground">System will check for duplicate leads before proceeding. Try <code className="text-foreground">9999999999</code> to see the error.</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">Monthly Income (₹)</label>
-                      <input value={income} onChange={(e) => setIncome(e.target.value)} placeholder="e.g. 45000" type="number" className={inputClass} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">Pincode</label>
-                      <input value={pincode} onChange={(e) => setPincode(e.target.value)} placeholder="e.g. 400001" maxLength={6} className={inputClass} />
-                    </div>
-                    <div className="col-span-2">
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">Employment Type</label>
-                      <div className="flex gap-3">
-                        {["salaried", "self-employed"].map((type) => (
-                          <button key={type} onClick={() => setEmployment(type)} className={cn(
-                            "flex-1 rounded-xl border py-3 text-sm font-semibold capitalize transition-all",
-                            employment === type ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-muted-foreground"
-                          )}>
-                            {type}
-                          </button>
-                        ))}
+                <AnimatePresence mode="wait">
+                  {step === 0 && (
+                    <motion.div key="step0" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Customer Name</label>
+                        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter full name" className={inputClass} />
                       </div>
-                    </div>
-                  </div>
-                )}
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Mobile Number</label>
+                        <input value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="10-digit mobile" maxLength={10} className={inputClass} />
+                      </div>
+                      <div className="col-span-2 flex items-start gap-2 rounded-xl bg-status-review/10 p-4">
+                        <AlertCircle className="h-4 w-4 text-status-review mt-0.5 shrink-0" />
+                        <p className="text-xs text-muted-foreground">System will check for duplicate leads before proceeding. Try <code className="text-foreground">9999999999</code> to see the error.</p>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {step === 1 && (
+                    <motion.div key="step1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-5">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-3 block">Select Loan Product</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {(Object.keys(LOAN_PRODUCTS) as LoanProduct[]).map((p) => {
+                            const Icon = PRODUCT_ICONS[p];
+                            return (
+                              <button
+                                key={p}
+                                onClick={() => setProduct(p)}
+                                className={cn(
+                                  "flex flex-col items-center justify-center gap-2 rounded-xl border p-4 transition-all",
+                                  product === p 
+                                    ? "border-primary bg-primary/5 text-primary shadow-sm" 
+                                    : "border-border text-muted-foreground hover:border-muted-foreground hover:bg-secondary/50"
+                                )}
+                              >
+                                <Icon className="h-5 w-5" />
+                                <span className="text-[11px] font-bold text-center leading-tight">{LOAN_PRODUCTS[p]}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Required Loan Amount (₹)</label>
+                        <input 
+                          value={amount} 
+                          onChange={(e) => setAmount(e.target.value)} 
+                          placeholder="e.g. 500000" 
+                          type="number" 
+                          className={inputClass} 
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {step === 2 && (
+                    <motion.div key="step2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Monthly Income (₹)</label>
+                        <input value={income} onChange={(e) => setIncome(e.target.value)} placeholder="e.g. 45000" type="number" className={inputClass} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Pincode</label>
+                        <input value={pincode} onChange={(e) => setPincode(e.target.value)} placeholder="e.g. 400001" maxLength={6} className={inputClass} />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Employment Type</label>
+                        <div className="flex gap-3">
+                          {["salaried", "self-employed"].map((type) => (
+                            <button key={type} onClick={() => setEmployment(type)} className={cn(
+                              "flex-1 rounded-xl border py-3 text-sm font-semibold capitalize transition-all",
+                              employment === type ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-muted-foreground"
+                            )}>
+                              {type}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="flex gap-3 pt-2">
-                  {step === 1 && (
-                    <button onClick={() => setStep(0)} className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all">
+                  {step > 0 && (
+                    <button onClick={() => setStep(step - 1)} className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all">
                       ← Back
                     </button>
                   )}
                   <button onClick={handleSubmit} className="flex-1 flex items-center justify-center gap-2 gold-gradient rounded-xl py-3 text-sm font-bold text-primary-foreground shadow-lg active:scale-[0.98] transition-transform">
                     <Send className="h-4 w-4" />
-                    {step === 0 ? "Check & Continue" : "Submit Lead"}
+                    {step < 2 ? "Continue" : "Submit Lead"}
                   </button>
                 </div>
               </div>
