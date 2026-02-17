@@ -17,6 +17,7 @@ import {
   Building,
   Home,
   Smartphone,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,6 +30,8 @@ import { cn } from "@/lib/utils";
 import {
   fetchCreditReport,
   updateCreditReport,
+  sendOtpToMobile,
+  verifyOtpApi,
 } from "@/api/api";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
@@ -56,12 +59,6 @@ const employmentStatuses = [
   { value: "self-employed", label: "Self Employed" },
   { value: "business", label: "Business Owner" },
   { value: "retired", label: "Retired" },
-];
-
-const residentialStatuses = [
-  { value: "owned", label: "Owned" },
-  { value: "rented", label: "Rented" },
-  { value: "family", label: "Living with Family" },
 ];
 
 const getTodayISODate = () => {
@@ -113,6 +110,8 @@ const LoanApplication = () => {
   const [pageLoading, setPageLoading] = useState(false);
   const [needsMobile, setNeedsMobile] = useState(false);
   const [tempMobile, setTempMobile] = useState("");
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
 
   const navigate = useNavigate();
 
@@ -372,26 +371,6 @@ const LoanApplication = () => {
     </div>
   );
 
-  const DocumentStatus = ({ label, file, icon: Icon }: any) => (
-    <div className="flex justify-between items-center py-2.5 border-b border-border/30 last:border-0">
-      <span className="text-muted-foreground text-sm flex items-center gap-2">
-        {Icon && <Icon className="w-4 h-4 text-primary/60" />}
-        {label}
-      </span>
-      {file ? (
-        <span className="text-sm font-medium text-green-600 flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full">
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          Uploaded
-        </span>
-      ) : (
-        <span className="text-sm font-medium text-destructive flex items-center gap-1.5 bg-destructive/10 px-2.5 py-1 rounded-full">
-          <AlertCircle className="w-3.5 h-3.5" />
-          Missing
-        </span>
-      )}
-    </div>
-  );
-
   const autoFillUserDetails = async () => {
     const mobile = sessionStorage.getItem("mobile_number");
     if (!mobile) {
@@ -421,14 +400,40 @@ const LoanApplication = () => {
     }
   };
 
-  const handleMobileSubmit = () => {
+  const handleSendOtp = async () => {
     if (!/^\d{10}$/.test(tempMobile)) {
       toast.error("Please enter a valid 10-digit mobile number");
       return;
     }
-    sessionStorage.setItem("mobile_number", tempMobile);
-    setNeedsMobile(false);
-    autoFillUserDetails();
+    setIsLoading(true);
+    try {
+      await sendOtpToMobile({ mobileNumber: tempMobile });
+      setIsOtpSent(true);
+      toast.success("OTP sent successfully");
+    } catch (error) {
+      toast.error("Failed to send OTP");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!/^\d{4,6}$/.test(otp)) {
+      toast.error("Please enter a valid OTP");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await verifyOtpApi({ mobileNumber: tempMobile, otp });
+      sessionStorage.setItem("mobile_number", tempMobile);
+      setNeedsMobile(false);
+      autoFillUserDetails();
+      toast.success("OTP verified successfully");
+    } catch (error) {
+      toast.error("Invalid OTP");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   async function uploadFinancialDocsFrontend({ userId, requestedLoanAmount, requestedLoanTenure, loanType }: any) {
@@ -472,27 +477,58 @@ const LoanApplication = () => {
             <h1 className="text-3xl font-bold text-foreground mb-2">
               Welcome to <span className="text-[#7c3bed]">Happirate</span>
             </h1>
-            <p className="text-muted-foreground">Enter your mobile to start your application</p>
+            <p className="text-muted-foreground">Verify your identity to start your application</p>
           </div>
-          <FormCard title="Enter Mobile Number">
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                <Smartphone className="w-5 h-5 text-primary" />
-                <p className="text-sm text-muted-foreground">We'll use this to fetch your credit profile.</p>
+          
+          {!isOtpSent ? (
+            <FormCard title="Enter Mobile Number">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <Smartphone className="w-5 h-5 text-primary" />
+                  <p className="text-sm text-muted-foreground">We'll send a verification code to this number.</p>
+                </div>
+                <FormInput 
+                  label="Mobile Number" 
+                  placeholder="9876543210" 
+                  value={tempMobile} 
+                  onChange={(v) => setTempMobile(v.replace(/\D/g, "").slice(0, 10))}
+                  type="tel"
+                  required
+                />
+                <Button onClick={handleSendOtp} disabled={isLoading} className="w-full h-12">
+                  {isLoading ? <Loader size={20} /> : "Send OTP"}
+                </Button>
               </div>
-              <FormInput 
-                label="Mobile Number" 
-                placeholder="9876543210" 
-                value={tempMobile} 
-                onChange={(v) => setTempMobile(v.replace(/\D/g, "").slice(0, 10))}
-                type="tel"
-                required
-              />
-              <Button onClick={handleMobileSubmit} className="w-full h-12">
-                Continue
-              </Button>
-            </div>
-          </FormCard>
+            </FormCard>
+          ) : (
+            <FormCard title="Verify OTP">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <Lock className="w-5 h-5 text-primary" />
+                  <p className="text-sm text-muted-foreground">Enter the code sent to +91 {tempMobile}</p>
+                </div>
+                <FormInput 
+                  label="One-Time Password" 
+                  placeholder="Enter OTP" 
+                  value={otp} 
+                  onChange={(v) => setOtp(v.replace(/\D/g, "").slice(0, 6))}
+                  type="text"
+                  required
+                />
+                <div className="flex flex-col gap-3">
+                  <Button onClick={handleVerifyOtp} disabled={isLoading} className="w-full h-12">
+                    {isLoading ? <Loader size={20} /> : "Verify & Continue"}
+                  </Button>
+                  <button 
+                    onClick={() => setIsOtpSent(false)} 
+                    className="text-sm text-primary font-medium hover:underline"
+                  >
+                    Change Mobile Number
+                  </button>
+                </div>
+              </div>
+            </FormCard>
+          )}
         </div>
       </div>
     );
