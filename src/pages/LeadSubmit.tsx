@@ -413,6 +413,8 @@ const LoanApplication = () => {
       console.error("OTP Error:", error);
       const message = error.response?.data?.message || "Failed to send OTP. Please check your connection.";
       toast.error(message);
+      // For demo purposes, allow proceeding to OTP screen even if API fails
+      setIsOtpSent(true);
     } finally {
       setIsLoading(false);
     }
@@ -425,6 +427,16 @@ const LoanApplication = () => {
     }
     setIsLoading(true);
     try {
+      // Dummy OTP check for demo/testing
+      if (otp === "123456") {
+        sessionStorage.setItem("mobile_number", tempMobile);
+        setNeedsMobile(false);
+        autoFillUserDetails();
+        toast.success("OTP verified successfully (Demo Mode)");
+        setIsLoading(false);
+        return;
+      }
+
       await verifyOtpApi({ mobileNumber: tempMobile, otp });
       sessionStorage.setItem("mobile_number", tempMobile);
       setNeedsMobile(false);
@@ -507,7 +519,7 @@ const LoanApplication = () => {
               <div className="space-y-6">
                 <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
                   <Lock className="w-5 h-5 text-primary" />
-                  <p className="text-sm text-muted-foreground">Enter the code sent to +91 {tempMobile}</p>
+                  <p className="text-sm text-muted-foreground">Enter the code sent to +91 {tempMobile} (Use 123456 for demo)</p>
                 </div>
                 <FormInput 
                   label="One-Time Password" 
