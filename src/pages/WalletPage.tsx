@@ -1,4 +1,4 @@
-import { partnerProfile, mockLeads } from "@/lib/mockData";
+import { partnerProfile, mockLeads, LOAN_PRODUCTS } from "@/lib/mockData";
 import { motion } from "framer-motion";
 import { Download, CalendarDays, Trophy, TrendingUp } from "lucide-react";
 import confetti from "canvas-confetti";
@@ -18,10 +18,11 @@ const WalletPage = () => {
   }, [totalCommission, hasConfettied]);
 
   const exportCSV = useCallback(() => {
-    const headers = ["Lead ID", "Customer", "Loan Amount", "Disbursed On", "Commission"];
+    const headers = ["Lead ID", "Customer", "Loan Product", "Loan Amount", "Disbursed On", "Commission"];
     const rows = disbursedLeads.map((l) => [
       l.id,
       l.customerName,
+      LOAN_PRODUCTS[l.loanProduct],
       l.loanAmount,
       l.updatedAt,
       l.commission || 0,
@@ -83,9 +84,10 @@ const WalletPage = () => {
 
         <div className="card-elevated rounded-xl overflow-hidden">
           {/* Table Header */}
-          <div className="hidden md:grid grid-cols-5 gap-4 px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border bg-secondary/30">
+          <div className="hidden md:grid grid-cols-6 gap-4 px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border bg-secondary/30">
             <span>Lead ID</span>
             <span>Customer</span>
+            <span>Product</span>
             <span>Loan Amount</span>
             <span>Disbursed On</span>
             <span className="text-right">Commission</span>
@@ -98,10 +100,11 @@ const WalletPage = () => {
                 key={lead.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4 px-5 py-4 items-center border-b border-border last:border-0 hover:bg-secondary/20 transition-colors"
+                className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-4 px-5 py-4 items-center border-b border-border last:border-0 hover:bg-secondary/20 transition-colors"
               >
                 <span className="text-sm font-mono text-muted-foreground">{lead.id}</span>
                 <span className="text-sm font-medium text-foreground">{lead.customerName}</span>
+                <span className="text-xs font-medium text-primary">{LOAN_PRODUCTS[lead.loanProduct]}</span>
                 <span className="text-sm text-foreground">₹{lead.loanAmount.toLocaleString("en-IN")}</span>
                 <span className="text-sm text-muted-foreground">{lead.updatedAt}</span>
                 <span className="text-sm font-bold text-primary md:text-right">+₹{(lead.commission || 0).toLocaleString("en-IN")}</span>

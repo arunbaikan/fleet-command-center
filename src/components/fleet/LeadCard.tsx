@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
-import { Lead, STATUS_MAP } from "@/lib/mockData";
+import { Lead, STATUS_MAP, LOAN_PRODUCTS } from "@/lib/mockData";
 import StatusBadge from "./StatusBadge";
-import { MessageCircle, Phone } from "lucide-react";
+import { MessageCircle, Phone, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 
 const LeadCard = forwardRef<HTMLDivElement, { lead: Lead; index: number }>(
@@ -22,6 +22,11 @@ const LeadCard = forwardRef<HTMLDivElement, { lead: Lead; index: number }>(
             <p className="text-xs text-muted-foreground">{lead.id} · {lead.mobile}</p>
           </div>
           <StatusBadge status={lead.status} />
+        </div>
+
+        <div className="flex items-center gap-1.5 mb-2">
+          <Briefcase className="h-3 w-3 text-primary" />
+          <span className="text-xs font-medium text-primary">{LOAN_PRODUCTS[lead.loanProduct]}</span>
         </div>
 
         <div className="flex items-center justify-between mt-3">

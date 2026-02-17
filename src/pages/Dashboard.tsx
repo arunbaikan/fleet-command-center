@@ -1,5 +1,5 @@
 import EarningsCard from "@/components/fleet/EarningsCard";
-import { partnerProfile, mockLeads } from "@/lib/mockData";
+import { partnerProfile, mockLeads, LOAN_PRODUCTS } from "@/lib/mockData";
 import StatusBadge from "@/components/fleet/StatusBadge";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -112,7 +112,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">{lead.customerName}</p>
-                    <p className="text-xs text-muted-foreground">{lead.id} · ₹{lead.loanAmount.toLocaleString("en-IN")}</p>
+                    <p className="text-xs text-muted-foreground">{lead.id} · {LOAN_PRODUCTS[lead.loanProduct]} · ₹{lead.loanAmount.toLocaleString("en-IN")}</p>
                   </div>
                 </div>
                 <StatusBadge status={lead.status} />
