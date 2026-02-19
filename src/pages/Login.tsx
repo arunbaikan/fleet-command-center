@@ -163,6 +163,16 @@ const Login = () => {
                 <p className="text-center text-[11px] text-muted-foreground">
                   Demo: any valid 10-digit number works
                 </p>
+
+                <p className="text-center text-xs text-muted-foreground border-t border-border pt-4">
+                  New partner?{" "}
+                  <button
+                    onClick={() => navigate("/register")}
+                    className="text-primary font-semibold hover:underline"
+                  >
+                    Create Account
+                  </button>
+                </p>
               </motion.div>
             ) : (
               <motion.div
