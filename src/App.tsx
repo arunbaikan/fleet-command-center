@@ -12,6 +12,7 @@ import Leads from "./pages/Leads";
 import WalletPage from "./pages/WalletPage";
 import CompareLoan from "./pages/CompareLoan";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<FleetLayout />}>
                 <Route path="/" element={<Dashboard />} />
