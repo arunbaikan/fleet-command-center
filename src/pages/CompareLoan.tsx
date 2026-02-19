@@ -3,6 +3,7 @@ import { lenders, Lender } from "@/Data/lenders";
 import { LenderCard } from "@/components/LenderCard";
 import { ComparisonTable } from "@/components/ComparisionTable";
 import { DetailedComparison } from "@/components/DetailedComparison";
+import { PreSanctionLetter } from "@/components/PreSanctionLetter";
 import { ProvisionalOfferLetter } from "@/components/ProvisionalOfferLetter";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -84,6 +85,7 @@ const CompareLonePage = () => {
     try {
       setLoading(true);
       const resp = await fetchEligibleLoanProducts();
+      console.log("response", resp);
       const banks = resp.data.banks.map((bank) => {
         const {
           bankId,
@@ -94,6 +96,7 @@ const CompareLonePage = () => {
           maximumEligibleLoanAmount,
           processingFee,
           disbursal,
+          tenureOptions,
         } = bank;
         return {
           id: bankId,
@@ -103,7 +106,7 @@ const CompareLonePage = () => {
           maxSanctionAmount: maximumEligibleLoanAmount,
           trueAPR: interestRate,
           trueAPRMax: interestRate,
-          tenureOptions: "12-84 months",
+          tenureOptions: tenureOptions || "12-84 months",
           processingFee: processingFee,
           processingFeeMin: 0.5,
           processingFeeMax: 1.5,
@@ -127,7 +130,7 @@ const CompareLonePage = () => {
         };
       });
       setLenders(banks);
-      console.log("resp", resp);
+      // console.log("resp", resp);
     } catch (error) {
       console.log("Error in fetching products", error);
     } finally {
@@ -145,29 +148,25 @@ const CompareLonePage = () => {
   return (   
     <div className="min-h-screen justify-center bg-background">
       {/* Hero Section */}
-      <header className="relative bg-gradient-to-br from-[#1a132f] via-[#2a1f4a] to-[#3b2a63] text-white py-24 mt-19">
+      {/* <header className="relative bg-gradient-to-br from-[#1a132f] via-[#2a1f4a] to-[#3b2a63] text-white py-24 mt-19">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="text-center animate-fade-in">
-            {/* Top Badge */}
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md text-white px-5 py-2 rounded-full text-sm font-medium mb-8">
               <Shield className="w-4 h-4" />
               Trusted by 50,000+ borrowers
             </div>
 
-            {/* Heading */}
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4">
               Compare Loans.
               <br />
               <span className="text-white">Save Thousands.</span>
             </h1>
 
-            {/* Subtitle */}
             <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10">
               Compare offers from 10+ top banks & NBFCs. Get the best rates,
               fastest approval, and lowest fees.
             </p>
 
-            {/* Features */}
             <div className="flex flex-wrap justify-center gap-8 text-sm md:text-base">
               <div className="flex items-center gap-2 text-white/90">
                 <Zap className="w-5 h-5 text-yellow-400" />
@@ -184,13 +183,13 @@ const CompareLonePage = () => {
             </div>
           </div>
         </div>
-      </header>
+      </header> */}
 
       {/* Main Content */}
       <div className="flex justify-center">
-        <main className="w-full container max-w-6xl py-10 md:py-14">
+        <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-0 py-10 md:py-14">
           {/* Main Tabs - Only show when not in detailed/letter views */}
-          {(stage === "compare" || stage === "psl") && (
+          {/* {(stage === "compare" || stage === "psl") && (
             <div className="flex justify-center mb-8">
               <div className="flex bg-gray-100 rounded-2xl p-1 shadow-sm">
                 <button
@@ -219,11 +218,11 @@ const CompareLonePage = () => {
                 </button>
               </div>
             </div>
-          )}
+          )} */}
           {stage === "compare" && (
             <div className="animate-fade-in">
               {/* View Toggle & Selection Info */}
-              <section className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+              <section className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 mt-15">
                 <div className="flex items-center gap-3">
                   <h2 className="!text-2xl !font-bold text-gray-900">
                     Compare {lenders.length} Lenders

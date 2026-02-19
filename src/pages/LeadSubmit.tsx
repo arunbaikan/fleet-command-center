@@ -88,6 +88,11 @@ const buildEmploymentDetailsPayload = (data: any) => ({
   mobileNumber: sessionStorage.getItem("mobile_number"),
   employmentStatus: data.employmentStatus,
   companyName: data.companyName,
+  previousCompanyName: data.previousCompanyName,
+  previousCompanyFrom: data.previousCompanyFrom,
+  previousCompanyTo: data.previousCompanyTo,
+  currentCompanyName: data.currentCompanyName,
+  currentCompanyJoiningDate: data.currentCompanyJoiningDate,
   uanNumber: data.uanNumber,
   employmentExperience: data.employmentExperience,
   monthlyIncome: Number(data.monthlyIncome),
@@ -145,6 +150,11 @@ const LoanApplication = () => {
     loanTenure: "",
     employmentCategory: "",
     salaryMode: "",
+    previousCompanyName: "",
+    previousCompanyFrom: "",
+    previousCompanyTo: "",
+    currentCompanyName: "",
+    currentCompanyJoiningDate: "",
   });
 
   const isEmpty = (v: any) => v === "" || v === null || v === undefined;
@@ -174,6 +184,19 @@ const LoanApplication = () => {
       if (!formData.employmentStatus || formData.employmentStatus.trim() === "")
         newErrors.employmentStatus = "Employment Status is Required";
       if (!formData.companyName) newErrors.companyName = "Company Name is Required";
+      if (!formData.previousCompanyName)
+        newErrors.previousCompanyName = "Previous Company Name is required";
+      if (!formData.previousCompanyFrom)
+        newErrors.previousCompanyFrom = "Previous Company Joined Date is required";
+      if (!formData.previousCompanyTo) {
+        newErrors.previousCompanyTo = "Previous Company Relieving Date is required";
+      } else if (formData.previousCompanyFrom && formData.previousCompanyTo <= formData.previousCompanyFrom) {
+        newErrors.previousCompanyTo = "Relieving date must be after joined date";
+      }
+      if (!formData.currentCompanyName)
+        newErrors.currentCompanyName = "Current Company Name is required";
+      if (!formData.currentCompanyJoiningDate)
+        newErrors.currentCompanyJoiningDate = "Current Company Joining Date is required";
       if (!formData.monthlyIncome) newErrors.monthlyIncome = "Monthly Income is Required";
       if (!formData.employmentCategory) newErrors.employmentCategory = "Employment Category is required";
       if (!formData.cibilScore) newErrors.cibilScore = "CIBIL Score is Required";
@@ -323,6 +346,11 @@ const LoanApplication = () => {
       employmentStatus: apiData.employmentStatus?.toLowerCase() ?? "",
       employmentExperience: apiData.employmentExperience ?? "",
       companyName: apiData.companyName ?? "",
+      previousCompanyName: apiData.previousCompanyName ?? "",
+      previousCompanyFrom: apiData.previousCompanyFrom?.split("T")[0] ?? "",
+      previousCompanyTo: apiData.previousCompanyTo?.split("T")[0] ?? "",
+      currentCompanyName: apiData.companyName,
+      currentCompanyJoiningDate: apiData.currentCompanyJoiningDate?.split("T")[0] ?? "",
       monthlyIncome: apiData.monthlyIncome ?? "",
       residentialStatus: residenceAddress.type ? residenceAddress.type.toLowerCase() : "",
       addressLine1: residenceAddress?.streetAddress ?? "",
@@ -362,6 +390,10 @@ const LoanApplication = () => {
       
       if (apiData) {
         sessionStorage.setItem("userId", apiData._id);
+        sessionStorage.setItem(
+              "username",
+              `${apiData.firstName} ${apiData.middleName} ${apiData.lastName}`,
+            );
         const apiEmails = Array.isArray(apiData.emails)
           ? apiData.emails.map((e: any) => e.email).filter(Boolean)
           : [];
@@ -404,37 +436,29 @@ const LoanApplication = () => {
     }
   };
 
-  const handleVerifyOtp = async () => {
-    if (!/^\d{4,6}$/.test(otp)) {
-      toast.error("Please enter a valid OTP");
-      return;
-    }
-    setIsLoading(true);
-    try {
-      // Dummy OTP check for demo/testing
-      if (otp === "123456") {
-        sessionStorage.setItem("mobile_number", tempMobile);
-        setNeedsMobile(false);
-        await autoFillUserDetails(tempMobile);
-        toast.success("OTP verified successfully (Demo Mode)");
-        setIsLoading(false);
-        return;
-      }
-
-      await verifyOtpApi({ mobileNumber: tempMobile, otp });
+const handleVerifyOtp = async () => {
+  if (!/^\d{4,6}$/.test(otp)) {
+    toast.error("Please enter a valid OTP");
+    return;
+  }
+  setIsLoading(true);
+  try {
+    const resp = await verifyOtpApi({ mobileNumber: tempMobile, otp });
+    
+    if (resp.status === 200) {
       sessionStorage.setItem("mobile_number", tempMobile);
       setNeedsMobile(false);
       await autoFillUserDetails(tempMobile);
       toast.success("OTP verified successfully");
-    } catch (error: any) {
-      console.error("Verify Error:", error);
-      const message = error.response?.data?.message || "Invalid OTP. Please try again.";
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
     }
-  };
-
+  } catch (error: any) {
+    console.error("Verify Error:", error);
+    const message = error.response?.data?.message || "Invalid OTP. Please try again.";
+    toast.error(message);
+  } finally {
+    setIsLoading(false);
+  }
+};
   async function uploadFinancialDocsFrontend({ userId, requestedLoanAmount, requestedLoanTenure, loanType }: any) {
     try {
       await axios.post("https://m3pmjfgx-3000.inc1.devtunnels.ms/api/customer/upload-docs", {
@@ -530,7 +554,7 @@ const LoanApplication = () => {
               <div className="space-y-6">
                 <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
                   <Lock className="w-5 h-5 text-primary" />
-                  <p className="text-sm text-muted-foreground">Enter the code sent to +91 {tempMobile} (Use 123456 for demo)</p>
+                  <p className="text-sm text-muted-foreground">Enter the code sent to +91 {tempMobile}</p>
                 </div>
                 <FormInput 
                   label="One-Time Password" 
@@ -645,12 +669,105 @@ const LoanApplication = () => {
                 <h3 className="text-base font-semibold text-foreground flex items-center gap-2"><Briefcase className="w-4 h-4 text-primary" />Employment Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   <FormSelect label="Employment Status" value={formData.employmentStatus} onChange={(v) => updateFormData("employmentStatus", v)} options={employmentStatuses} required error={errors.employmentStatus} />
-                  <FormInput label="Company Name" value={formData.companyName} onChange={(v) => updateFormData("companyName", v)} required error={errors.companyName} />
+                  <FormSelect label="Salary Mode" value={formData.salaryMode} onChange={(v) => updateFormData("salaryMode", v)} required options={[{ value: "bank_transfer", label: "Bank Transfer" }, { value: "cash", label: "Cash" }]} error={errors.salaryMode} />
                   <FormInput label="Employment Category" value={formData.employmentCategory} onChange={(v) => updateFormData("employmentCategory", v)} required error={errors.employmentCategory} />
                   <FormInput label="Employment Experience (Years)" value={formData.employmentExperience} type="number" step="0.1" onChange={(v) => updateFormData("employmentExperience", v)} required error={errors.employmentExperience} />
                   <FormInput label="UAN / PF Number" value={formData.uanNumber} onChange={(v) => updateFormData("uanNumber", v.replace(/\D/g, ""))} required error={errors.uanNumber} />
                   <FormInput label="Monthly Income (₹)" value={formData.monthlyIncome} onChange={(v) => updateFormData("monthlyIncome", v)} type="number" required error={errors.monthlyIncome} />
-                  <FormSelect label="Salary Mode" value={formData.salaryMode} onChange={(v) => updateFormData("salaryMode", v)} required options={[{ value: "bank_transfer", label: "Bank Transfer" }, { value: "cash", label: "Cash" }]} error={errors.salaryMode} />
+                  <FormInput
+                      label="Previous Company Name"
+                      value={formData.previousCompanyName || ""}
+                      onChange={(v) => updateFormData("previousCompanyName", v)}
+                      placeholder="Enter previous company name"
+                      required
+                      error={errors.previousCompanyName}
+                    />
+
+                    {/* Previous Company From Date - custom with Calendar icon */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground flex items-center gap-1">
+                        Previous Company Joined Date <span className="text-destructive">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          value={formData.previousCompanyFrom || ""}
+                          onChange={(e) => updateFormData("previousCompanyFrom", e.target.value)}
+                          max={getTodayISODate()}
+                          className={cn(
+                            "w-full rounded-md bg-background px-3 py-2 pr-10 text-sm border focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer",
+                            errors.previousCompanyFrom
+                              ? "border-destructive focus:ring-destructive"
+                              : "border-input"
+                          )}
+                        />
+                        {/* <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" /> */}
+                      </div>
+                      {errors.previousCompanyFrom && (
+                        <p className="text-xs text-destructive mt-1">{errors.previousCompanyFrom}</p>
+                      )}
+                    </div>
+
+                    {/* Previous Company To Date - custom with Calendar icon */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground flex items-center gap-1">
+                        Previous Company Relieving Date <span className="text-destructive">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          value={formData.previousCompanyTo || ""}
+                          onChange={(e) => updateFormData("previousCompanyTo", e.target.value)}
+                          min={formData.previousCompanyFrom || undefined}
+                          max={getTodayISODate()}
+                          className={cn(
+                            "w-full rounded-md bg-background px-3 py-2 pr-10 text-sm border focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer",
+                            errors.previousCompanyTo
+                              ? "border-destructive focus:ring-destructive"
+                              : "border-input"
+                          )}
+                        />
+                        {/* <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" /> */}
+                      </div>
+                      {errors.previousCompanyTo && (
+                        <p className="text-xs text-destructive mt-1">{errors.previousCompanyTo}</p>
+                      )}
+                    </div>
+
+                    <FormInput
+                      label="Current Company Name"
+                      value={formData.currentCompanyName || ""}
+                      onChange={(v) => updateFormData("currentCompanyName", v)}
+                      placeholder="Enter current company name"
+                      required
+                      error={errors.currentCompanyName}
+                    />
+
+                    {/* Current Company Joining Date - custom with Calendar icon */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground flex items-center gap-1">
+                        Current Company Joining Date <span className="text-destructive">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          value={formData.currentCompanyJoiningDate || ""}
+                          onChange={(e) => updateFormData("currentCompanyJoiningDate", e.target.value)}
+                          min={formData.previousCompanyTo || undefined}
+                          max={getTodayISODate()}
+                          className={cn(
+                            "w-full rounded-md bg-background px-3 py-2 pr-10 text-sm border focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer",
+                            errors.currentCompanyJoiningDate
+                              ? "border-destructive focus:ring-destructive"
+                              : "border-input"
+                          )}
+                        />
+                        {/* <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" /> */}
+                      </div>
+                      {errors.currentCompanyJoiningDate && (
+                        <p className="text-xs text-destructive mt-1">{errors.currentCompanyJoiningDate}</p>
+                      )}
+                    </div>
                 </div>
               </div>
               <div className="space-y-6 mt-8 pt-6 border-t border-border">

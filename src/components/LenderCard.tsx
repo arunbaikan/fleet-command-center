@@ -24,7 +24,7 @@ export const LenderCard = ({ lender, isSelected, onSelect, disabled, onApplyNow 
     if (probability >= 80) return 'bg-blue-100 text-blue-700';
     return 'bg-orange-100 text-orange-700';
   };
-
+  console.log("Lender in card", lender);
   return (
       <div
         className={cn(
@@ -83,14 +83,15 @@ export const LenderCard = ({ lender, isSelected, onSelect, disabled, onApplyNow 
             Est. Sanction
           </div>
           <div className="font-semibold text-gray-900">
-            Up to ₹{(lender.maxSanctionAmount / 100000).toFixed(0)}L
+            {/* Up to ₹{lender.maxSanctionAmount}L */}
+            Up to ₹{(lender.maxSanctionAmount / 100000).toFixed(2)}L
           </div>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-3">
           <div className="flex items-center gap-1.5 text-gray-500 text-xs mb-1">
             <Percent className="w-3.5 h-3.5" />
-            True APR
+            Interest Rate
           </div>
           <div className="font-semibold text-gray-900 mt-3 ml-2">
             {lender.trueAPR}%
@@ -116,7 +117,8 @@ export const LenderCard = ({ lender, isSelected, onSelect, disabled, onApplyNow 
             Processing Fee
           </span>
           <span className="font-medium text-gray-900">
-            {lender.processingFeeMin}% – {lender.processingFeeMax}%
+            {/* {lender.processingFeeMin}% – {lender.processingFeeMax}% */}
+            {lender.processingFee}
           </span>
         </div>
 

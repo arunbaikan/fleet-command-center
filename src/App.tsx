@@ -25,8 +25,8 @@ const App = () => (
             <Route path="/loan-application" element={<LeadSubmit />} />
             <Route path="/leads" element={<Leads />} />
             <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/compare-loan" element={<CompareLoan />} />
           </Route>
-          <Route path="/compare-loan" element={<CompareLoan />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
