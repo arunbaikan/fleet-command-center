@@ -1,8 +1,10 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, UserPlus, List, Wallet, Skull, Settings, LogOut, ChevronRight, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { partnerProfile } from "@/lib/mockData";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -13,7 +15,15 @@ const navItems = [
 
 const FleetLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, partnerMobile } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Signed out successfully");
+    navigate("/login");
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -70,11 +80,17 @@ const FleetLayout = () => {
 
         {/* Footer */}
         <div className="border-t border-border p-4 space-y-2">
+          {partnerMobile && (
+            <p className="px-3 py-1 text-[10px] text-muted-foreground truncate">+91 {partnerMobile.slice(0,5)}*****</p>
+          )}
           <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-all">
             <Settings className="h-[18px] w-[18px]" />
             Settings
           </button>
-          <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+          >
             <LogOut className="h-[18px] w-[18px]" />
             Sign Out
           </button>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
 
-interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface FormInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   label: string;
   error?: string;
   hint?: string;
