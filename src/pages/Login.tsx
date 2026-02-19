@@ -76,56 +76,65 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-14">
       {/* Background decoration */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-72 w-72 rounded-full bg-primary/5 blur-2xl" />
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="relative w-full max-w-sm"
+        className="relative w-full max-w-lg"
       >
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl purple-gradient shadow-lg mb-4">
+        <div className="flex flex-col items-center mb-10">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl purple-gradient shadow-lg mb-5">
             <Skull className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Happirate <span className="purple-text">Fleet</span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Partner Portal</p>
+          <p className="text-sm text-muted-foreground mt-1 tracking-wide">Partner Portal</p>
         </div>
 
         {/* Card */}
-        <div className="card-elevated rounded-2xl p-6 shadow-xl">
+        <div className="card-elevated rounded-2xl px-8 py-10 shadow-xl md:px-12">
           <AnimatePresence mode="wait">
-            {step === "mobile" ? (
+
+            {/* ── STEP: Mobile ── */}
+            {step === "mobile" && (
               <motion.div
                 key="mobile"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.25 }}
-                className="space-y-5"
+                className="space-y-6"
               >
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-                    <Phone className="h-4 w-4 text-primary" />
+                {/* Step header */}
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                    <Phone className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-base font-semibold text-foreground">Sign In</h2>
-                    <p className="text-xs text-muted-foreground">Enter your registered mobile</p>
+                    <h2 className="text-xl font-bold text-foreground">Sign In</h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">Enter your registered mobile number</p>
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Mobile Number</label>
-                  <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 h-12 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                    <span className="text-sm font-medium text-muted-foreground border-r border-border pr-3">+91</span>
+                {/* Mobile input */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground">Mobile Number</label>
+                  <div className={cn(
+                    "flex items-center gap-3 rounded-xl border bg-background px-4 h-13 transition-all",
+                    "focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20",
+                    mobileError ? "border-destructive" : "border-border"
+                  )}>
+                    <span className="text-sm font-semibold text-muted-foreground border-r border-border pr-3 py-3">+91</span>
                     <input
                       type="tel"
                       inputMode="numeric"
@@ -136,19 +145,22 @@ const Login = () => {
                         setMobileError("");
                       }}
                       onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
-                      placeholder="10-digit number"
-                      className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                      placeholder="10-digit mobile number"
+                      className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none py-3"
                       autoFocus
                     />
                   </div>
-                  {mobileError && <p className="text-xs text-destructive font-medium">{mobileError}</p>}
+                  {mobileError && (
+                    <p className="text-xs text-destructive font-medium mt-1">{mobileError}</p>
+                  )}
                 </div>
 
+                {/* Send OTP button */}
                 <button
                   onClick={handleSendOtp}
                   disabled={loading || mobile.length !== 10}
                   className={cn(
-                    "w-full flex items-center justify-center gap-2 rounded-xl h-12 text-sm font-semibold transition-all",
+                    "w-full flex items-center justify-center gap-2 rounded-xl h-12 text-sm font-semibold transition-all mt-2",
                     "purple-gradient text-primary-foreground shadow-md hover:opacity-90 active:scale-95",
                     "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
                   )}
@@ -156,47 +168,54 @@ const Login = () => {
                   {loading ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
                   ) : (
-                    <>Send OTP <ArrowRight className="h-4 w-4" /></>
+                    <><span>Send OTP</span><ArrowRight className="h-4 w-4" /></>
                   )}
                 </button>
 
-                <p className="text-center text-[11px] text-muted-foreground">
+                <p className="text-center text-sm text-muted-foreground pt-1">
                   Demo: any valid 10-digit number works
                 </p>
 
-                <p className="text-center text-xs text-muted-foreground border-t border-border pt-4">
-                  New partner?{" "}
-                  <button
-                    onClick={() => navigate("/register")}
-                    className="text-primary font-semibold hover:underline"
-                  >
-                    Create Account
-                  </button>
-                </p>
+                {/* Divider + Register link */}
+                <div className="border-t border-border pt-5 mt-2">
+                  <p className="text-center text-md text-muted-foreground">
+                    New partner?{" "}
+                    <button
+                      onClick={() => navigate("/register")}
+                      className="text-primary font-semibold hover:underline"
+                    >
+                      Create Account
+                    </button>
+                  </p>
+                </div>
               </motion.div>
-            ) : (
+            )}
+
+            {/* ── STEP: OTP ── */}
+            {step === "otp" && (
               <motion.div
                 key="otp"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.25 }}
-                className="space-y-5"
+                className="space-y-6"
               >
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-                    <ShieldCheck className="h-4 w-4 text-primary" />
+                {/* Step header */}
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-base font-semibold text-foreground">Verify OTP</h2>
-                    <p className="text-xs text-muted-foreground">
+                    <h2 className="text-xl font-bold text-foreground">Verify OTP</h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">
                       Sent to +91 {mobile.slice(0, 5)}*****
                     </p>
                   </div>
                 </div>
 
                 {/* OTP Boxes */}
-                <div className="flex gap-3 justify-center">
+                <div className="flex gap-4 justify-center my-4">
                   {otp.map((digit, i) => (
                     <input
                       key={i}
@@ -208,26 +227,28 @@ const Login = () => {
                       onChange={(e) => handleOtpChange(i, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(i, e)}
                       className={cn(
-                        "h-14 w-14 rounded-xl border-2 bg-background text-center text-xl font-bold text-foreground",
+                        "h-16 w-16 rounded-xl border-2 bg-background text-center text-2xl font-bold text-foreground",
                         "focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all",
-                        digit ? "border-primary" : "border-border"
+                        digit ? "border-primary bg-primary/5" : "border-border"
                       )}
                       autoFocus={i === 0}
                     />
                   ))}
                 </div>
 
-                <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-2.5 text-center">
-                  <p className="text-xs text-primary font-medium">
-                    Demo OTP: <span className="font-bold tracking-widest">{DUMMY_OTP}</span>
+                {/* Demo hint */}
+                <div className="rounded-xl bg-primary/5 border border-primary/20 px-5 py-3 text-center my-2">
+                  <p className="text-sm text-primary font-medium">
+                    Demo OTP: <span className="font-bold tracking-[0.3em]">{DUMMY_OTP}</span>
                   </p>
                 </div>
 
+                {/* Verify button */}
                 <button
                   onClick={handleVerifyOtp}
                   disabled={loading || otp.join("").length !== 4}
                   className={cn(
-                    "w-full flex items-center justify-center gap-2 rounded-xl h-12 text-sm font-semibold transition-all",
+                    "w-full flex items-center justify-center gap-2 rounded-xl h-12 text-sm font-semibold transition-all mt-2",
                     "purple-gradient text-primary-foreground shadow-md hover:opacity-90 active:scale-95",
                     "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
                   )}
@@ -235,24 +256,32 @@ const Login = () => {
                   {loading ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
                   ) : (
-                    <>Verify & Login <ShieldCheck className="h-4 w-4" /></>
+                    <><span>Verify & Login</span><ShieldCheck className="h-4 w-4" /></>
                   )}
                 </button>
 
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <button onClick={() => setStep("mobile")} className="hover:text-foreground transition-colors">
+                {/* Change number / Resend */}
+                <div className="flex items-center justify-between text-sm text-muted-foreground pt-1">
+                  <button
+                    onClick={() => setStep("mobile")}
+                    className="hover:text-foreground transition-colors"
+                  >
                     ← Change Number
                   </button>
-                  <button onClick={handleResend} className="hover:text-primary transition-colors text-primary font-medium">
+                  <button
+                    onClick={handleResend}
+                    className="text-primary font-semibold hover:underline transition-colors"
+                  >
                     Resend OTP
                   </button>
                 </div>
               </motion.div>
             )}
+
           </AnimatePresence>
         </div>
 
-        <p className="text-center text-[11px] text-muted-foreground mt-6">
+        <p className="text-center text-xs text-muted-foreground mt-8 mb-2">
           © 2026 Happirate Fleet · Partner Portal
         </p>
       </motion.div>

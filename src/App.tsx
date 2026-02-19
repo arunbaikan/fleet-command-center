@@ -23,16 +23,6 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        {/* <Routes>
-          <Route element={<FleetLayout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/loan-application" element={<LeadSubmit />} />
-            <Route path="/leads" element={<Leads />} />
-            <Route path="/wallet" element={<WalletPage />} />
-            <Route path="/compare-loan" element={<CompareLoan />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes> */}
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
