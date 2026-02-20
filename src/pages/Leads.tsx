@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
-import { mockLeads, LeadStatus, LoanProduct, LOAN_PRODUCTS } from "@/lib/mockData";
+import { useState, useMemo, useCallback } from "react";
+import { mockLeads, Lead, LeadStatus, LoanProduct, LOAN_PRODUCTS } from "@/lib/mockData";
 import LeadCard from "@/components/fleet/LeadCard";
+import SendUpdateDialog from "@/components/fleet/SendUpdateDialog";
 import { cn } from "@/lib/utils";
-import { Search, SlidersHorizontal, ArrowUpDown, Briefcase } from "lucide-react";
+import { Search, SlidersHorizontal, ArrowUpDown, Briefcase, Send } from "lucide-react";
 
 const statusFilters: { label: string; value: LeadStatus | "ALL" }[] = [
   { label: "All", value: "ALL" },
@@ -34,6 +35,13 @@ const Leads = () => {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [updateTargetLeads, setUpdateTargetLeads] = useState<Lead[]>([]);
+
+  const handleSendUpdate = useCallback((lead: Lead) => {
+    setUpdateTargetLeads([lead]);
+    setUpdateDialogOpen(true);
+  }, []);
 
   const filtered = useMemo(() => {
     let results = mockLeads
@@ -59,6 +67,11 @@ const Leads = () => {
 
     return results;
   }, [activeFilter, productFilter, sortBy, search]);
+
+  const handleSendToAll = useCallback(() => {
+    setUpdateTargetLeads(filtered);
+    setUpdateDialogOpen(true);
+  }, [filtered]);
 
   const counts = useMemo(() => {
     const map: Record<string, number> = { ALL: mockLeads.length };
@@ -194,7 +207,18 @@ const Leads = () => {
       </div>
 
       {/* Results count */}
-      <p className="text-xs text-muted-foreground">{filtered.length} lead{filtered.length !== 1 ? "s" : ""} found</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">{filtered.length} lead{filtered.length !== 1 ? "s" : ""} found</p>
+        {filtered.length > 0 && (
+          <button
+            onClick={handleSendToAll}
+            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <Send className="h-3.5 w-3.5" />
+            Send Update to All ({filtered.length})
+          </button>
+        )}
+      </div>
 
       {/* Lead Grid */}
       {filtered.length === 0 ? (
@@ -203,9 +227,15 @@ const Leads = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((lead, i) => <LeadCard key={lead.id} lead={lead} index={i} />)}
+          {filtered.map((lead, i) => <LeadCard key={lead.id} lead={lead} index={i} onSendUpdate={handleSendUpdate} />)}
         </div>
       )}
+
+      <SendUpdateDialog
+        open={updateDialogOpen}
+        onOpenChange={setUpdateDialogOpen}
+        leads={updateTargetLeads}
+      />
     </div>
   );
 };
