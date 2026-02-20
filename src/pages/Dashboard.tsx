@@ -1,7 +1,7 @@
 import EarningsCard from "@/components/fleet/EarningsCard";
 import { partnerProfile, mockLeads, LOAN_PRODUCTS } from "@/lib/mockData";
 import StatusBadge from "@/components/fleet/StatusBadge";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Copy, Share2, Users, TrendingUp, ArrowRight, Target, Activity } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const recentLeads = mockLeads.slice(0, 5);
 
   const stats = useMemo(() => {
@@ -20,10 +21,10 @@ const Dashboard = () => {
     ).length;
 
     return [
-      { label: "Total Leads", value: partnerProfile.totalLeads, icon: Users, color: "text-foreground" },
-      { label: "Conversion Rate", value: `${partnerProfile.conversionRate}%`, icon: TrendingUp, color: "text-accent" },
-      { label: "Active This Week", value: activeThisWeek, icon: Activity, color: "text-status-review" },
-      { label: "Pending Review", value: pendingReview, icon: Target, color: "text-primary" },
+      { label: "Total Leads", value: partnerProfile.totalLeads, icon: Users, color: "text-foreground", link: "/leads" },
+      { label: "Conversion Rate", value: `${partnerProfile.conversionRate}%`, icon: TrendingUp, color: "text-accent", link: "/leads?status=DISBURSED" },
+      { label: "Active This Week", value: activeThisWeek, icon: Activity, color: "text-status-review", link: "/leads?filter=active_week" },
+      { label: "Pending Review", value: pendingReview, icon: Target, color: "text-primary", link: "/leads?filter=pending_review" },
     ];
   }, []);
 
@@ -54,11 +55,15 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="card-elevated rounded-xl p-5 flex flex-col justify-between"
+              onClick={() => navigate(stat.link)}
+              className="card-elevated rounded-xl p-5 flex flex-col justify-between cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all group"
             >
-              <div className="flex items-center gap-2 mb-3">
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{stat.label}</p>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{stat.label}</p>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <p className={cn("text-3xl font-bold", stat.color)}>{stat.value}</p>
             </motion.div>

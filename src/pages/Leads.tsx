@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { mockLeads, Lead, LeadStatus, LoanProduct, LOAN_PRODUCTS } from "@/lib/mockData";
 import LeadCard from "@/components/fleet/LeadCard";
 import SendUpdateDialog from "@/components/fleet/SendUpdateDialog";
@@ -30,7 +31,17 @@ const sortOptions: { label: string; value: SortOption }[] = [
 ];
 
 const Leads = () => {
-  const [activeFilter, setActiveFilter] = useState<LeadStatus | "ALL">("ALL");
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  const initialStatus = (() => {
+    const s = searchParams.get("status");
+    if (s && statusFilters.some(f => f.value === s)) return s as LeadStatus | "ALL";
+    return "ALL";
+  })();
+  const initialSpecial = searchParams.get("filter") || "";
+
+  const [activeFilter, setActiveFilter] = useState<LeadStatus | "ALL">(initialStatus);
+  const [specialFilter, setSpecialFilter] = useState(initialSpecial);
   const [productFilter, setProductFilter] = useState<LoanProduct | "ALL">("ALL");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [search, setSearch] = useState("");
@@ -38,14 +49,38 @@ const Leads = () => {
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [updateTargetLeads, setUpdateTargetLeads] = useState<Lead[]>([]);
 
+  // Clear URL params after reading
+  useEffect(() => {
+    if (searchParams.has("status") || searchParams.has("filter")) {
+      setSearchParams({}, { replace: true });
+    }
+  }, []);
+
+  // Reset special filter when user manually changes status filter
+  const handleStatusFilter = (value: LeadStatus | "ALL") => {
+    setActiveFilter(value);
+    setSpecialFilter("");
+  };
+
   const handleSendUpdate = useCallback((lead: Lead) => {
     setUpdateTargetLeads([lead]);
     setUpdateDialogOpen(true);
   }, []);
 
   const filtered = useMemo(() => {
-    let results = mockLeads
-      .filter((l) => activeFilter === "ALL" || l.status === activeFilter)
+    let results = mockLeads;
+
+    // Special filters (multi-status)
+    if (specialFilter === "pending_review") {
+      results = results.filter(l => l.status === "UNDERWRITING" || l.status === "DOC_VERIFICATION");
+    } else if (specialFilter === "active_week") {
+      const weekAgo = Date.now() - 7 * 86400000;
+      results = results.filter(l => new Date(l.updatedAt).getTime() >= weekAgo);
+    } else {
+      results = results.filter((l) => activeFilter === "ALL" || l.status === activeFilter);
+    }
+
+    results = results
       .filter((l) => productFilter === "ALL" || l.loanProduct === productFilter)
       .filter(
         (l) =>
@@ -66,7 +101,7 @@ const Leads = () => {
     });
 
     return results;
-  }, [activeFilter, productFilter, sortBy, search]);
+  }, [activeFilter, specialFilter, productFilter, sortBy, search]);
 
   const handleSendToAll = useCallback(() => {
     setUpdateTargetLeads(filtered);
@@ -124,15 +159,30 @@ const Leads = () => {
           </button>
         </div>
 
+        {/* Special filter banner */}
+        {specialFilter && (
+          <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2">
+            <p className="text-xs font-medium text-primary">
+              {specialFilter === "pending_review" ? "Showing: Pending Review (Docs Pending + In Review)" : "Showing: Active This Week"}
+            </p>
+            <button
+              onClick={() => { setSpecialFilter(""); setActiveFilter("ALL"); }}
+              className="ml-auto text-xs text-primary font-semibold hover:underline"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
         {/* Status Filter Pills */}
         <div className="flex gap-1.5 overflow-x-auto w-full pb-1">
           {statusFilters.map((f) => (
             <button
               key={f.value}
-              onClick={() => setActiveFilter(f.value)}
+              onClick={() => handleStatusFilter(f.value)}
               className={cn(
                 "shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all",
-                activeFilter === f.value
+                activeFilter === f.value && !specialFilter
                   ? "gold-gradient text-primary-foreground shadow"
                   : "bg-secondary text-muted-foreground hover:text-foreground"
               )}
