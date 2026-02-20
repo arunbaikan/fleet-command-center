@@ -1,11 +1,11 @@
 import { forwardRef } from "react";
 import { Lead, STATUS_MAP, LOAN_PRODUCTS } from "@/lib/mockData";
 import StatusBadge from "./StatusBadge";
-import { MessageCircle, Phone, Briefcase } from "lucide-react";
+import { MessageCircle, Phone, Briefcase, Send } from "lucide-react";
 import { motion } from "framer-motion";
 
-const LeadCard = forwardRef<HTMLDivElement, { lead: Lead; index: number }>(
-  ({ lead, index }, ref) => {
+const LeadCard = forwardRef<HTMLDivElement, { lead: Lead; index: number; onSendUpdate?: (lead: Lead) => void }>(
+  ({ lead, index, onSendUpdate }, ref) => {
     const statusInfo = STATUS_MAP[lead.status];
 
     return (
@@ -40,6 +40,15 @@ const LeadCard = forwardRef<HTMLDivElement, { lead: Lead; index: number }>(
             )}
           </div>
           <div className="flex gap-2">
+            {onSendUpdate && (
+              <button
+                onClick={() => onSendUpdate(lead)}
+                title="Send Update"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-foreground transition-colors hover:bg-accent/80"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            )}
             <button
               onClick={() => window.open(`https://wa.me/${lead.mobile.replace(/\*/g, '')}`, "_blank")}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
