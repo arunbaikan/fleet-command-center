@@ -18,6 +18,12 @@ import {
   Home,
   Smartphone,
   Lock,
+  Link2,
+  Copy,
+  MessageCircle,
+  Share2,
+  ExternalLink,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -101,7 +107,10 @@ const buildEmploymentDetailsPayload = (data: any) => ({
   salaryMode: data.salaryMode,
 });
 
+type SubmitMode = "select" | "assisted" | "magic_link";
+
 const LoanApplication = () => {
+  const [mode, setMode] = useState<SubmitMode>("select");
   const [currentStep, setCurrentStep] = useState(0);
   const [emailOptions, setEmailOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -112,6 +121,13 @@ const LoanApplication = () => {
   const [tempMobile, setTempMobile] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
+
+  // Magic Link state
+  const [magicLinkCustomer, setMagicLinkCustomer] = useState("");
+  const [magicLinkMobile, setMagicLinkMobile] = useState("");
+  const [magicLinkProduct, setMagicLinkProduct] = useState("");
+  const [generatedLink, setGeneratedLink] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const navigate = useNavigate();
 
@@ -461,8 +477,47 @@ const LoanApplication = () => {
   };
 
   useEffect(() => {
-    autoFillUserDetails();
-  }, [autoFillUserDetails]);
+    if (mode === "assisted") {
+      autoFillUserDetails();
+    }
+  }, [autoFillUserDetails, mode]);
+
+  const generateMagicLink = () => {
+    if (!magicLinkCustomer.trim() || !magicLinkMobile.trim()) {
+      toast.error("Please enter customer name and mobile number");
+      return;
+    }
+    if (!/^\d{10}$/.test(magicLinkMobile)) {
+      toast.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    const uniqueId = `ML-${Date.now().toString(36).toUpperCase()}`;
+    const link = `https://happirate.in/apply/${uniqueId}?ref=CP_5501&m=${magicLinkMobile}`;
+    setGeneratedLink(link);
+    setLinkCopied(false);
+    toast.success("Magic Link generated!");
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(generatedLink);
+    setLinkCopied(true);
+    toast.success("Link copied to clipboard!");
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const shareOnWhatsApp = () => {
+    const message = `Hi ${magicLinkCustomer}! 👋\n\nYour loan application link is ready. Click below to start:\n\n${generatedLink}\n\nThis is a secure one-time link. Complete your application in just 5 minutes!\n\n— Team Happirate`;
+    window.open(`https://wa.me/91${magicLinkMobile}?text=${encodeURIComponent(message)}`, "_blank");
+    toast.success("Opening WhatsApp...");
+  };
+
+  const resetMagicLink = () => {
+    setMagicLinkCustomer("");
+    setMagicLinkMobile("");
+    setMagicLinkProduct("");
+    setGeneratedLink("");
+    setLinkCopied(false);
+  };
 
   const SummarySection = ({ title, icon: Icon, children }: any) => (
     <div className="bg-card rounded-xl border border-border/50 overflow-hidden shadow-sm">
@@ -490,6 +545,147 @@ const LoanApplication = () => {
       </span>
     </div>
   );
+
+  // Mode Selection Screen
+  if (mode === "select") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/20 px-4">
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+              New <span className="text-primary">Lead</span>
+            </h1>
+            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto rounded-full opacity-50 mb-4" />
+            <p className="text-muted-foreground">Choose how you want to submit this lead</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Assisted Mode Card */}
+            <button
+              onClick={() => setMode("assisted")}
+              className="group relative bg-card border-2 border-border hover:border-primary rounded-2xl p-8 text-left transition-all duration-300 hover:shadow-lg hover:shadow-primary/10"
+            >
+              <div className="absolute top-4 right-4 bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                Recommended
+              </div>
+              <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
+                <UserPlus className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">Assisted Mode</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                Fill the application on behalf of the customer. Auto-fetches credit profile via mobile OTP.
+              </p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0" />Auto-fill from credit report</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0" />Document upload support</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0" />Higher conversion rate</li>
+              </ul>
+            </button>
+
+            {/* Magic Link Card */}
+            <button
+              onClick={() => setMode("magic_link")}
+              className="group relative bg-card border-2 border-border hover:border-green-500 rounded-2xl p-8 text-left transition-all duration-300 hover:shadow-lg hover:shadow-green-500/10"
+            >
+              <div className="w-14 h-14 rounded-xl bg-green-500/10 flex items-center justify-center mb-5 group-hover:bg-green-500/20 transition-colors">
+                <MessageCircle className="w-7 h-7 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">WhatsApp Magic Link</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                Generate a unique link and share via WhatsApp. Customer self-fills the application.
+              </p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />Unique link per customer</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />One-tap WhatsApp share</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />Customer fills at their pace</li>
+              </ul>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Magic Link Screen
+  if (mode === "magic_link") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/20 px-4">
+        <div className="w-full max-w-lg">
+          <button
+            onClick={() => { setMode("select"); resetMagicLink(); }}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to options
+          </button>
+
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">WhatsApp Magic Link</h1>
+            <p className="text-muted-foreground text-sm">Generate a unique application link for your customer</p>
+          </div>
+
+          <FormCard title="Customer Details">
+            <div className="space-y-5">
+              <FormInput
+                label="Customer Name"
+                placeholder="e.g. Rajesh Kumar"
+                value={magicLinkCustomer}
+                onChange={(v) => setMagicLinkCustomer(v)}
+                required
+              />
+              <FormInput
+                label="Mobile Number"
+                placeholder="9876543210"
+                value={magicLinkMobile}
+                onChange={(v) => setMagicLinkMobile(v.replace(/\D/g, "").slice(0, 10))}
+                type="tel"
+                required
+              />
+              <FormSelect
+                label="Loan Product (Optional)"
+                value={magicLinkProduct}
+                onChange={(v) => setMagicLinkProduct(v)}
+                options={loanTypes}
+              />
+
+              {!generatedLink ? (
+                <Button onClick={generateMagicLink} className="w-full h-12 text-base">
+                  <Link2 className="w-5 h-5 mr-2" /> Generate Magic Link
+                </Button>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-muted/50 rounded-xl border border-border p-4">
+                    <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">Generated Link</p>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs text-foreground bg-background rounded-lg px-3 py-2 flex-1 overflow-x-auto border border-border">
+                        {generatedLink}
+                      </code>
+                      <Button variant="outline" size="icon" onClick={copyLink} className="shrink-0">
+                        {linkCopied ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={shareOnWhatsApp}
+                    className="w-full h-12 text-base bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Share2 className="w-5 h-5 mr-2" /> Share on WhatsApp
+                  </Button>
+
+                  <Button variant="outline" onClick={resetMagicLink} className="w-full">
+                    Generate Another Link
+                  </Button>
+                </div>
+              )}
+            </div>
+          </FormCard>
+        </div>
+      </div>
+    );
+  }
 
   if (needsMobile) {
     return (
